@@ -528,6 +528,38 @@ d'illustration, alors qu'ils étaient jusque-là volontairement tus.
   prêtes — la mise en scène devient "je navigue et je montre", pas
   "regardez, j'active à l'instant".
 
+---
+
+## 2026-09-01 (matin, suite) — Alertes email réelles + réparation TABLEAU_DE_BORD_EXPLOITATION (WEF)
+
+**Alertes email** : `notifier.sh` d'ECF affichait `[WAZ_ELK_FACTORY]` codé
+en dur dans l'objet des mails — copié depuis WEF sans jamais être adapté,
+aurait fait atterrir les alertes ECF dans le mauvais dossier Outlook du
+client (le tri repose sur ce texte exact). Corrigé : `[${PROJECT_NAME}]`
+partout, jamais un nom de projet figé. `NOTIF_ENABLED`/`SMTP_HOST`/
+`SMTP_USER`/`NOTIF_FROM`/`NOTIF_TO` activés dans `vars.conf` (non
+secrets, committables) pour ECF et WEF ; le mot de passe réel reste
+volontairement HORS de Git (déposé uniquement dans
+`secrets/smtp_password.txt` sur la VM ECF, jamais commité — discipline
+du projet depuis le début). Testé réellement de bout en bout sur ECF
+(`notifier.sh --test` + simulation du chemin ECHEC utilisé par
+l'orchestrateur) : email reçu, objet correct.
+
+**TABLEAU_DE_BORD_EXPLOITATION.xlsx (WEF)** : signalé par le client comme
+"corrompu" (n'ouvrait jamais, même après redémarrage du PC). Diagnostic
+réel (pas supposé) : zip intact, XML bien formé sur les 15 parties,
+structure OPC valide (vérifié via `System.IO.Packaging.Package` .NET) —
+mais un test avec le VRAI moteur Excel (automatisation COM) confirmait
+un échec reproductible et systématique, isolé de l'environnement (un
+fichier fraîchement créé par Excel s'ouvrait sans problème). Cause
+identifiée : dans les 9 feuilles, `<cols>` apparaissait avant
+`<sheetViews>` — ordre inverse de la séquence exigée par le schéma
+`CT_Worksheet`, invisible pour tout vérificateur XML/zip générique,
+rejeté uniquement par le validateur strict d'Excel. Réparé en
+reconstruisant le classeur via l'automatisation Excel elle-même (jamais
+un nouveau rapiéçage XML manuel) - garantie totale puisque c'est Excel
+qui écrit le fichier. Vérifié ouvert avec succès au chemin final réel.
+
 ## Ce qui n'a volontairement PAS été commencé cette nuit
 
 - **Tier 1 (modules par domaine métier)** et **Tier 2 (jobs RUN de
