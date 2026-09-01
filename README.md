@@ -10,11 +10,17 @@ réutilisé tel quel et jamais réécrit pour ce projet — projet volontairemen
 ## Démarrage rapide
 
 ```bash
+cd ~
 git clone https://github.com/ykeupssi123-ship-it/ECF.git erp_crm_factory
 cd erp_crm_factory
 # ajuster vars.conf (IP cible, versions) pour votre VM avant de lancer
 ./orchestrator.sh
 ```
+
+Destination toujours identique : `~/erp_crm_factory` (le `cd ~` initial est
+volontaire — jamais un chemin qui dépend du répertoire où on se trouvait
+avant de lancer la commande, même principe que
+`PROCEDURE_CONNEXION_GITHUB.pdf` côté WAZ_ELK_FACTORY).
 
 L'orchestrateur installe tout Tier 0 (OS → PostgreSQL → Python 3.11
 compilé → Odoo 19 → nginx HTTPS → DNS interne → sauvegarde → vérification
