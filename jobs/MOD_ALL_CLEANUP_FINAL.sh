@@ -38,7 +38,19 @@ source "$PROJECT_ROOT/lib/commun.sh"
 # desactivee en pratique, pas une "app metier" que le client active/
 # desactive pour la demo). Verifie sans impact : site et service restent
 # pleinement fonctionnels (HTTP 200) avec mail installe seul.
-MODULES="contacts calendar crm sale_management account purchase stock mrp repair fleet point_of_sale pos_restaurant website website_sale website_event website_slides website_hr_recruitment hr hr_attendance hr_holidays hr_expense hr_recruitment hr_skills project project_todo maintenance survey lunch im_livechat mass_mailing mass_mailing_sms marketing_card data_recycle"
+# CORRIGE le 2026-09-01, 2e fois (constat reel en construisant les jobs
+# d'illustration Tier 2, voir docs/JOURNAL_TECHNIQUE.md) : "crm" et "hr"
+# retires aussi de cette liste. Decouverte reelle : "button_immediate_
+# uninstall()" ne masque pas seulement le module dans l'interface, il
+# SUPPRIME REELLEMENT ses tables SQL (verifie : "hr_employee"/"crm_lead"
+# n'existaient plus du tout apres desinstallation - erreur postgres
+# "la relation n'existe pas", pas juste des lignes vides). Desactiver un
+# module qui porte des donnees d'illustration construites (employes
+# CLIM AUTO/COUL, pipeline CRM) detruirait ce travail a chaque passage de
+# ce job. Tout module recevant des donnees d'illustration Tier 2 doit
+# desormais etre ajoute ici, jamais laisse dans la liste desactivee par
+# defaut.
+MODULES="contacts calendar sale_management account purchase stock mrp repair fleet point_of_sale pos_restaurant website website_sale website_event website_slides website_hr_recruitment hr_attendance hr_holidays hr_expense hr_recruitment hr_skills project project_todo maintenance survey lunch im_livechat mass_mailing mass_mailing_sms marketing_card data_recycle"
 
 for tour in 1 2 3; do
   reste=0

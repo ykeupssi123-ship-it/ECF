@@ -464,6 +464,70 @@ ECHEC` sur l'orchestrateur complet (Tier 0 + 68 jobs Tier 1 + nettoyage).
 `mail`, comme voulu. Site accessible, service actif. Système prêt pour
 activation manuelle module par module par l'opérateur en démo.
 
+---
+
+## 2026-09-01 (matin, suite) — Tier 2 : premières illustrations personnalisées (CLIM AUTO / COUL)
+
+**Contexte** : les deux clients réels ont insisté sur le volet RH et le
+volet CRM. Le client a donné leurs noms réels pour la démo : **CLIM
+AUTO** (garage/climatisation auto, Cocody) et **COUL** (parfumerie, Le
+Plateau) — utilisés désormais explicitement dans les données
+d'illustration, alors qu'ils étaient jusque-là volontairement tus.
+
+**Construit et vérifié en base à chaque étape** (jamais supposé) :
+- `ILL_CLIMAUTO_SOCIETE` / `ILL_COUL_SOCIETE` : fiche société réelle
+  Odoo (`res.company`) par client, adresse réelle (Cocody / Le Plateau,
+  pays `base.ci` vérifié existant avant usage).
+- `ILL_CLIMAUTO_EMPLOYES` / `ILL_COUL_EMPLOYES` : 5 et 4 employés
+  fictifs mais réalistes (noms, postes, contacts ivoiriens) — volet RH.
+- `ILL_CLIMAUTO_CRM_PISTES` / `ILL_COUL_CRM_PISTES` : 4 pistes
+  commerciales chacun, à des stades de pipeline variés (nouveau, qualifié,
+  gagné) pour un pipeline vivant, pas une liste plate — volet CRM.
+
+### Incident 9 — les marqueurs `<CODE>_ACTIVE.ok` ne reflètent pas l'état réel après un cycle activation/désactivation
+
+- **Constat réel** : `IN_COND=CRM_ACTIVE` sur un job Tier 2 restait
+  satisfait (marqueur `.ok` présent) alors que `crm` était réellement
+  `uninstalled` en base — le marqueur avait été créé lors du test Tier 1
+  de la nuit et n'était jamais effacé par la désactivation suivante.
+- **Cause racine** : les marqueurs `.ok` sont conçus, dans ce projet,
+  comme un registre "a déjà réussi une fois" (correct pour Tier 0, jamais
+  rejoué) — jamais prévus comme miroir de l'état courant pour des jobs
+  qui basculent (activation/désactivation). Une désactivation ne levait
+  jamais le marqueur ACTIVE posé par l'activation précédente.
+- **Décision** : chacun des 34 scripts `MOD_<X>_DEACTIVATE.sh` efface
+  désormais son propre marqueur `<CODE>_ACTIVE.ok` après une
+  désinstallation réussie — la condition reflète enfin l'état réel
+  courant, pas un historique qui ne fait que s'accumuler.
+
+### Incident 10 — désinstaller un module Odoo supprime réellement ses données (pas seulement l'interface)
+
+- **Constat réel, découvert en voulant remettre RH/CRM à zéro après le
+  test d'illustration** : après `MOD_RH_DEACTIVATE`/`MOD_CRM_DEACTIVATE`,
+  une requête `SELECT count(*) FROM hr_employee` échoue avec
+  `ERREUR: la relation « hr_employee » n'existe pas` — la table SQL
+  elle-même a disparu, pas seulement les lignes ou le menu.
+- **Analyse honnête** : hypothèse implicite de toute la nuit (« désactiver
+  = juste masquer, les données restent, réapparaissent à la
+  réactivation ») **fausse** pour du contenu construit par un module —
+  `button_immediate_uninstall()` exécute une vraie désinstallation
+  (suppression de schéma), exactement ce qu'un clic réel "Désinstaller"
+  déclenche dans Odoo. Comportement produit réel, pas un défaut du
+  moteur de jobs.
+- **Conséquence directe et correction** : `hr` et `crm` retirés de la
+  liste de `MOD_ALL_CLEANUP_FINAL.sh` (même traitement que `mail`) — tout
+  module qui reçoit des données d'illustration Tier 2 doit rester
+  installé en permanence. Données recréées après cette découverte
+  (`ILL_*` rejoués), vérifiées de nouveau en base (10 employés, 8 pistes
+  CRM — les 9 fictifs + 1 employé "admin" auto-créé par Odoo à
+  l'installation du module RH).
+- **Impact sur la mise en scène de la démo** : le "j'active le module
+  devant le client" ne s'applique qu'aux modules **sans** données
+  d'illustration pré-construites. Pour RH/CRM (et tout futur module
+  illustré), le module reste actif en permanence avec de vraies données
+  prêtes — la mise en scène devient "je navigue et je montre", pas
+  "regardez, j'active à l'instant".
+
 ## Ce qui n'a volontairement PAS été commencé cette nuit
 
 - **Tier 1 (modules par domaine métier)** et **Tier 2 (jobs RUN de

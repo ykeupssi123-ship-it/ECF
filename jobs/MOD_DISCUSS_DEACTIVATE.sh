@@ -21,3 +21,12 @@ PROJECT_ROOT="$(dirname "$VARS_FILE")"
 source "$PROJECT_ROOT/lib/commun.sh"
 
 odoo_module_deactivate "mail"
+
+# CORRIGE le 2026-09-01 (defaut reel trouve en construisant les jobs
+# d'illustration Tier 2, voir docs/JOURNAL_TECHNIQUE.md) : "DISCUSS_ACTIVE.ok"
+# restait present pour toujours une fois cree - un job desactive puis
+# jamais reactive continuait a etre lu comme "actif" par tout job Tier 2
+# en dependant (IN_COND=DISCUSS_ACTIVE). Efface ici le marqueur ACTIVE
+# pour que la condition reflete l'etat REEL courant, jamais un historique
+# qui ne fait que s'accumuler.
+rm -f "${STATE_DIR}/DISCUSS_ACTIVE.ok"
