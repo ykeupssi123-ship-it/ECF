@@ -1,0 +1,45 @@
+#!/bin/bash
+# ODOO_007_WKHTMLTOPDF - WEF_ODOO_BLD_WKHTML - wkhtmltopdf (generation
+# des PDF de devis/factures/rapports - fait partie de l'ecosysteme
+# immediat d'Odoo, jamais dans les depots par defaut d'Oracle Linux)
+#
+# Version 0.12.6.1 avec Qt patche - la version recommandee par la
+# communaute Odoo (les versions sans patch Qt produisent des PDF sans
+# en-tetes/pieds de page corrects).
+#
+# CORRIGE le 2026-09-01 (echec reel, voir docs/JOURNAL_TECHNIQUE.md) :
+# le build "centos8" annonce dans ce commentaire n'existe plus dans la
+# release GitHub 0.12.6.1-3 (verifie reellement via l'API GitHub - 404
+# confirme sur l'ancienne URL). Le mainteneur a renomme la cible EL8 en
+# "almalinux8" (meme ABI RHEL8, compatible Oracle Linux 8). "curl -sL"
+# sans "-f" ne detectait pas le 404 et ecrivait la page d'erreur HTML de
+# GitHub comme si c'etait le RPM ("-sL" seul est silencieux sur les
+# erreurs HTTP) - "-f" ajoute pour qu'un futur lien casse le job au lieu
+# de produire un fichier invalide silencieusement.
+set -uo pipefail
+source "$VARS_FILE"
+
+if command -v wkhtmltopdf >/dev/null 2>&1; then
+  echo "[ODOO_007] wkhtmltopdf deja installe ($(wkhtmltopdf --version | head -1)), ignore."
+  echo "[ODOO_007] OK."
+  exit 0
+fi
+
+WKHTML_URL="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-3/wkhtmltox-0.12.6.1-3.almalinux8.x86_64.rpm"
+WKHTML_RPM="${WORK_TMP_DIR}/wkhtmltox.rpm"
+mkdir -p "$WORK_TMP_DIR"
+
+echo "[ODOO_007] Telechargement de wkhtmltopdf (Qt patche, 0.12.6.1-3)..."
+curl -sfL -o "$WKHTML_RPM" "$WKHTML_URL"
+
+echo "[ODOO_007] Installation..."
+dnf install -y "$WKHTML_RPM"
+rm -f "$WKHTML_RPM"
+
+if ! command -v wkhtmltopdf >/dev/null 2>&1; then
+  echo "[ODOO_007] ERREUR : wkhtmltopdf introuvable apres installation." >&2
+  exit 1
+fi
+
+echo "[ODOO_007] OK ($(wkhtmltopdf --version | head -1))."
+exit 0

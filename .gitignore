@@ -1,0 +1,15 @@
+# Etat/logs d'exploitation - propres a chaque machine, jamais versionnes
+state/*
+!state/.gitkeep
+logs/*
+!logs/.gitkeep
+
+# Secrets generes a l'execution - jamais versionnes (voir secrets/README_SECRETS.txt)
+secrets/*
+!secrets/README_SECRETS.txt
+
+__pycache__/
+*.pyc
+*~
+.DS_Store
+Thumbs.db

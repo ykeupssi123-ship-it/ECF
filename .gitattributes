@@ -1,0 +1,11 @@
+# Force LF partout, quelle que soit la config core.autocrlf de qui clone/
+# commite ce depot. Meme incident deja rencontre sur WAZ_ELK_FACTORY :
+# jobs_table.csv converti en CRLF bloque silencieusement toute la chaine
+# de dependances de l'orchestrateur (bash "read" preserve le \r).
+* text=auto eol=lf
+*.sh text eol=lf
+*.csv text eol=lf
+*.conf text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.xlsx binary
