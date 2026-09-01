@@ -102,9 +102,16 @@ send_mail(){
   return $rc
 }
 
+# CORRIGE le 2026-09-01 (bug reel trouve : "[WAZ_ELK_FACTORY]" etait
+# reste code en dur dans l'objet des emails de ce projet, copie depuis
+# WAZ_ELK_FACTORY sans etre adapte - aurait fait atterrir les alertes
+# ECF dans le mauvais dossier Outlook, puisque le tri du client repose
+# justement sur ce texte exact dans l'objet). "${PROJECT_NAME}" (deja
+# correct dans vars.conf de ce projet : ERP_CRM_FACTORY) utilise
+# partout desormais, jamais un nom de projet fige.
 if [ "${1:-}" = "--test" ]; then
   echo "[notifier] Envoi d'un email de test a ${NOTIF_TO} via ${SMTP_HOST}:${SMTP_PORT}..."
-  if send_mail "[WAZ_ELK_FACTORY] Test de notification" \
+  if send_mail "[${PROJECT_NAME}] Test de notification" \
     "Ceci est un email de test envoye par notifier.sh --test le $(date -Iseconds).
 Si vous recevez ceci, la configuration SMTP (vars.conf) est correcte."; then
     echo "[notifier] Email de test envoye avec succes."
@@ -126,7 +133,7 @@ if [ -z "$JOB_ID" ]; then
 fi
 
 MACHINE="$(hostname 2>/dev/null || echo inconnue)"
-BODY="Un job a echoue sur ${MACHINE} (${PROJECT_NAME:-WAZ_ELK_FACTORY}, ROLE=${ROLE:-inconnu}).
+BODY="Un job a echoue sur ${MACHINE} (${PROJECT_NAME}, ROLE=${ROLE:-inconnu}).
 
 JOB_ID    : ${JOB_ID}
 JOB_NAME  : ${JOB_NAME}
@@ -140,7 +147,7 @@ Consultez :
   cat ${LOG_FILE}"
 
 echo "[notifier] Envoi de l'alerte pour $JOB_ID..."
-if send_mail "[WAZ_ELK_FACTORY] ECHEC : ${JOB_ID} sur ${MACHINE}" "$BODY"; then
+if send_mail "[${PROJECT_NAME}] ECHEC : ${JOB_ID} sur ${MACHINE}" "$BODY"; then
   echo "[notifier] Alerte envoyee."
   exit 0
 else
