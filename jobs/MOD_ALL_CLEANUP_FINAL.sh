@@ -50,7 +50,11 @@ source "$PROJECT_ROOT/lib/commun.sh"
 # ce job. Tout module recevant des donnees d'illustration Tier 2 doit
 # desormais etre ajoute ici, jamais laisse dans la liste desactivee par
 # defaut.
-MODULES="contacts calendar sale_management account purchase stock mrp repair fleet point_of_sale pos_restaurant website website_sale website_event website_slides website_hr_recruitment hr_attendance hr_holidays hr_expense hr_recruitment hr_skills project project_todo maintenance survey lunch im_livechat mass_mailing mass_mailing_sms marketing_card data_recycle"
+# CORRIGE le 2026-09-01, 3e fois : "hr_holidays" (CONGES) et
+# "hr_recruitment" (RECRUTEMENT) retires egalement - portent maintenant
+# des donnees d'illustration reelles (demande de conges, offre d'emploi +
+# candidat pour CLIM AUTO). Meme raisonnement que crm/hr ci-dessus.
+MODULES="contacts calendar sale_management account purchase stock mrp repair fleet point_of_sale pos_restaurant website website_sale website_event website_slides website_hr_recruitment hr_attendance hr_expense hr_skills project project_todo maintenance survey lunch im_livechat mass_mailing mass_mailing_sms marketing_card data_recycle"
 
 for tour in 1 2 3; do
   reste=0
