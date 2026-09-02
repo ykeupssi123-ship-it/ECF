@@ -678,6 +678,41 @@ tôt dans la journée).
   ont été renvoyées après correction, plus jamais réaffirmé un succès
   sans literally re-tester.
 
+### Incident 15 — factures envoyées par email sans pièce jointe PDF
+
+- **Constat réel, rapporté par le client** : les emails de facture
+  arrivaient sans aucun PDF joint (contrairement au PDF envoyé
+  directement en fichier, qui lui fonctionnait).
+- **Cause racine, vérifiée en base** : `template.report_template_ids`
+  du modèle `account.email_template_edi_invoice` était **vide** —
+  `send_mail()` ne génère un PDF que si ce champ pointe vers un vrai
+  rapport (`mail_template.py`, vérifié dans le code source). Un envoi
+  direct (`report._render_qweb_pdf()`) fonctionnait car il ne dépend
+  pas de ce champ ; `send_mail()` via le modèle d'email, si.
+- **Correction** : `template.report_template_ids = [(4,
+  report_facture.id)]` avant l'envoi, dans les 3 jobs de facturation.
+
+### Incident 16 — factures en anglais malgré une demande explicite en français
+
+- **Constat** : le PDF généré affichait "Invoice", "Due Date", etc.
+- **Fausse piste** : `env['res.lang']._activate_lang('fr_FR')` +
+  `with_context(lang='fr_FR')` — n'a rien changé, le rendu restait en
+  anglais.
+- **Cause racine** : Odoo 19 a supprimé le modèle `ir.translation`
+  (vérifié : la table n'existe plus en base) — activer une langue
+  n'installe plus automatiquement ses traductions de la même façon.
+  Résolu via la commande officielle `odoo-bin --load-language=fr_FR
+  --stop-after-init`, mécanisme documenté et fiable, plutôt qu'un appel
+  Python interne dont l'API a changé entre versions.
+- **Vérifié réellement** : PDF régénéré et relu — "Facture", "Date de
+  facturation", "Échéance", "Communication de paiement" confirmés.
+- **Écart connu, assumé** : la devise reste USD sur les 3 sociétés
+  existantes (Odoo refuse tout changement de devise une fois des
+  écritures comptables postées — testé et confirmé par l'erreur réelle
+  du système). Corrigé pour les futurs déploiements uniquement (XOF fixé
+  dès `res.company.create()` dans les 3 jobs SOCIETE) — un rebuild complet
+  des 3 sociétés existantes pour ce seul detail n'a pas été jugé justifié.
+
 ## Ce qui n'a volontairement PAS été commencé cette nuit
 
 - **Tier 1 (modules par domaine métier)** et **Tier 2 (jobs RUN de
