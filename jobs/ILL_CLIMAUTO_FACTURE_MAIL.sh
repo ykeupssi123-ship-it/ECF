@@ -35,7 +35,10 @@ if not client:
         'street': 'Zone 4C, Marcory',
         'city': 'Abidjan',
         'country_id': env.ref('base.ci').id,
+        'lang': 'fr_FR',
     })
+elif client.lang != 'fr_FR':
+    client.lang = 'fr_FR'
 
 Move = env['account.move']
 invoice = Move.search([('partner_id', '=', client.id), ('move_type', '=', 'out_invoice'), ('state', '=', 'draft')], limit=1)
@@ -57,9 +60,20 @@ elif invoice.state == 'draft':
 
 print('RESULTAT: facture', invoice.name or invoice.id, 'total', invoice.amount_total, 'etat', invoice.state)
 
+# CORRIGE le 2026-09-02 (demande reelle du client + 2 defauts trouves) :
+# (1) 'report_template_ids' du modele d'email etait vide - send_mail()
+# ne generait donc JAMAIS de piece jointe PDF (verifie : aucune facture
+# recue par email jusqu'ici ne portait de PDF). Attache desormais le
+# vrai rapport facture. (2) Langue francaise : 'lang' pose sur le client
+# ci-dessus + contexte explicite ici (defense en profondeur - la langue
+# du PDF suit normalement celle du destinataire, mais un contexte
+# explicite ne coute rien et securise le rendu).
 template = env.ref('account.email_template_edi_invoice', raise_if_not_found=False)
 assert template, 'modele email facture introuvable'
-template.send_mail(invoice.id, force_send=True, email_values={'email_to': 'contact@ankrr.fr'})
+report = env.ref('account.account_invoices')
+if report not in template.report_template_ids:
+    template.report_template_ids = [(4, report.id)]
+template.with_context(lang='fr_FR').send_mail(invoice.id, force_send=True, email_values={'email_to': 'contact@ankrr.fr'})
 print('RESULTAT: email envoye pour facture', invoice.id)
 env.cr.commit()
 ")"

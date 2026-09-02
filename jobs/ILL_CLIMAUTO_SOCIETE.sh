@@ -12,11 +12,20 @@ echo "[ILL_CLIMAUTO_SOCIETE] Creation/verification de la societe CLIM AUTO..."
 _odoo_shell_exec "
 company = env['res.company'].search([('name', '=', 'CLIM AUTO')], limit=1)
 if not company:
+    # CORRIGE le 2026-09-02 (demande reelle du client, ecart connu decouvert
+    # trop tard pour les factures deja postees - voir docs/JOURNAL_TECHNIQUE.md) :
+    # Odoo REFUSE de changer la devise d'une societe une fois des ecritures
+    # comptables postees ('You cannot change the currency of the company
+    # since some journal items already exist') - la devise doit donc etre
+    # correcte DES LA CREATION, jamais corrigee apres coup. XOF (Franc CFA
+    # BCEAO) pour une societe ivoirienne, jamais l'USD par defaut.
+    xof = env['res.currency'].search([('name', '=', 'XOF')], limit=1)
     company = env['res.company'].create({
         'name': 'CLIM AUTO',
         'street': 'Boulevard Latrille, Cocody',
         'city': 'Abidjan',
         'country_id': env.ref('base.ci').id,
+        'currency_id': xof.id if xof else env.company.currency_id.id,
         'phone': '+225 27 22 44 18 90',
         'email': 'contact@climauto.ci',
         'website': 'https://climauto.ci',

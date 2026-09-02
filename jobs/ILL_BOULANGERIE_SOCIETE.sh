@@ -13,11 +13,16 @@ echo "[ILL_BOULANGERIE_SOCIETE] Creation/verification de la societe PAIN & GLACE
 _odoo_shell_exec "
 company = env['res.company'].search([('name', '=', 'PAIN & GLACE')], limit=1)
 if not company:
+    # CORRIGE le 2026-09-02 (voir ILL_CLIMAUTO_SOCIETE.sh pour le detail
+    # complet) : devise XOF fixee des la creation, jamais corrigeable
+    # apres coup une fois des ecritures comptables postees.
+    xof = env['res.currency'].search([('name', '=', 'XOF')], limit=1)
     company = env['res.company'].create({
         'name': 'PAIN & GLACE',
         'street': 'Rue du Commerce, Yopougon',
         'city': 'Abidjan',
         'country_id': env.ref('base.ci').id,
+        'currency_id': xof.id if xof else env.company.currency_id.id,
         'phone': '+225 27 23 45 67 89',
         'email': 'contact@painetglace.ci',
     })

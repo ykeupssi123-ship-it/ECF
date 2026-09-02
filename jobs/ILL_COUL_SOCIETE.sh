@@ -11,11 +11,16 @@ echo "[ILL_COUL_SOCIETE] Creation/verification de la societe COUL..."
 _odoo_shell_exec "
 company = env['res.company'].search([('name', '=', 'COUL')], limit=1)
 if not company:
+    # CORRIGE le 2026-09-02 (voir ILL_CLIMAUTO_SOCIETE.sh pour le detail
+    # complet) : devise XOF fixee des la creation, jamais corrigeable
+    # apres coup une fois des ecritures comptables postees.
+    xof = env['res.currency'].search([('name', '=', 'XOF')], limit=1)
     company = env['res.company'].create({
         'name': 'COUL',
         'street': 'Avenue Chardy, Le Plateau',
         'city': 'Abidjan',
         'country_id': env.ref('base.ci').id,
+        'currency_id': xof.id if xof else env.company.currency_id.id,
         'phone': '+225 27 20 31 55 07',
         'email': 'contact@coul.ci',
         'website': 'https://coul.ci',

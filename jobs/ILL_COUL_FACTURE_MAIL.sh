@@ -26,7 +26,10 @@ if not client:
         'street': 'Cocody Angre',
         'city': 'Abidjan',
         'country_id': env.ref('base.ci').id,
+        'lang': 'fr_FR',
     })
+elif client.lang != 'fr_FR':
+    client.lang = 'fr_FR'
 
 Move = env['account.move']
 invoice = Move.search([('partner_id', '=', client.id), ('move_type', '=', 'out_invoice'), ('state', '=', 'draft'), ('company_id', '=', company.id)], limit=1)
@@ -47,9 +50,15 @@ elif invoice.state == 'draft':
 
 print('RESULTAT: facture', invoice.name or invoice.id, 'total', invoice.amount_total, 'etat', invoice.state)
 
+# CORRIGE le 2026-09-02 (voir ILL_CLIMAUTO_FACTURE_MAIL.sh pour le
+# detail complet) : piece jointe PDF reellement attachee + langue
+# francaise.
 template = env.ref('account.email_template_edi_invoice', raise_if_not_found=False)
 assert template, 'modele email facture introuvable'
-template.send_mail(invoice.id, force_send=True, email_values={'email_to': 'contact@ankrr.fr'})
+report = env.ref('account.account_invoices')
+if report not in template.report_template_ids:
+    template.report_template_ids = [(4, report.id)]
+template.with_context(lang='fr_FR').send_mail(invoice.id, force_send=True, email_values={'email_to': 'contact@ankrr.fr'})
 print('RESULTAT: email envoye pour facture', invoice.id)
 env.cr.commit()
 ")"
