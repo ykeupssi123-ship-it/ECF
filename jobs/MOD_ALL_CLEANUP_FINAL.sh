@@ -54,7 +54,13 @@ source "$PROJECT_ROOT/lib/commun.sh"
 # "hr_recruitment" (RECRUTEMENT) retires egalement - portent maintenant
 # des donnees d'illustration reelles (demande de conges, offre d'emploi +
 # candidat pour CLIM AUTO). Meme raisonnement que crm/hr ci-dessus.
-MODULES="contacts calendar sale_management account purchase stock mrp repair fleet point_of_sale pos_restaurant website website_sale website_event website_slides website_hr_recruitment hr_attendance hr_expense hr_skills project project_todo maintenance survey lunch im_livechat mass_mailing mass_mailing_sms marketing_card data_recycle"
+# CORRIGE le 2026-09-01, 4e fois : "account" (COMPTA) retire egalement -
+# porte desormais de vraies factures postees (CLIM AUTO, COUL, PAIN &
+# GLACE) et le plan comptable charge pour ces societes. Meme raisonnement
+# que mail/hr/crm.
+# CORRIGE le 2026-09-01, 5e fois : "stock" retire egalement - porte le
+# stock reel de PAIN & GLACE (6 references, remplace son suivi Excel).
+MODULES="contacts calendar sale_management purchase mrp repair fleet point_of_sale pos_restaurant website website_sale website_event website_slides website_hr_recruitment hr_attendance hr_expense hr_skills project project_todo maintenance survey lunch im_livechat mass_mailing mass_mailing_sms marketing_card data_recycle"
 
 for tour in 1 2 3; do
   reste=0
