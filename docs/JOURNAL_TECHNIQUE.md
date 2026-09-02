@@ -560,6 +560,100 @@ reconstruisant le classeur via l'automatisation Excel elle-même (jamais
 un nouveau rapiéçage XML manuel) - garantie totale puisque c'est Excel
 qui écrit le fichier. Vérifié ouvert avec succès au chemin final réel.
 
+---
+
+## 2026-09-01 (après-midi) — Envoi réel d'emails depuis Odoo, 3e entreprise, incident réel corrigé
+
+**Contexte** : le client a demandé le maximum de cas d'usage réels pour
+CLIM AUTO et COUL, avec des documents (factures) atterrissant réellement
+dans sa boîte `contact@ankrr.fr`, plus une **3e entreprise réelle**
+rencontrée par le client (une boulangerie-glacier dont le comptable tient
+stock et comptabilité sur Excel) pour lui montrer le potentiel d'Odoo, et
+un argumentaire honnête sur la licence Enterprise.
+
+### `ODOO_MAIL_SERVER_REAL` — brancher Odoo lui-même sur le vrai relais
+
+Jusque-là, seul le test `curl` autonome (`ODOO_SMTP_TEST`) utilisait le
+relais OVH réel — Odoo restait sur Postfix local (catchall,
+`ODOO_016_SMTP_RELAY.sh`), jamais livré à l'extérieur. Nouveau job :
+configure `ir.mail_server` avec les vrais identifiants OVH et vérifie la
+connexion via `ir.mail_server.test_smtp_connection()` (méthode réelle du
+code source Odoo, jamais une simulation).
+
+### Incident 11 — OVH rejette les factures : le `From` ne correspond pas au compte authentifié
+
+- **Constat réel, rapporté par le client avec capture d'écran du vrai
+  bounce OVH** : `550 5.7.1 Rejected by policy: From header domain does
+  not align with authenticated domain`. Les en-têtes réels montraient
+  `From: "OdooBot" <odoobot@example.com>` alors que l'authentification
+  SMTP se faisait en `contact@ankrr.fr`.
+- **Faille de méthode reconnue honnêtement** : mon propre test
+  (`test_smtp_connection()` + absence d'exception à l'envoi) avait conclu
+  à tort à un succès — la soumission SMTP était bien acceptée (250 OK),
+  le rejet réel arrivait ensuite, de façon asynchrone (bounce), invisible
+  pour toute vérification côté serveur. Seule la boîte de réception
+  réelle du destinataire fait foi pour un envoi email — leçon retenue et
+  documentée pour ne plus jamais surtraiter un "aucune exception" comme
+  une preuve de livraison.
+- **Cause racine, trouvée en lisant le code source d'Odoo (jamais
+  supposée)** : l'adresse d'expédition se calcule via
+  `res.company.alias_domain_id.default_from_email`
+  (`mail_alias_domain.py`, `res_company.py`) — aucune société n'avait ce
+  domaine configuré, Odoo retombait donc sur son tout dernier repli codé
+  en dur, `OdooBot <odoobot@example.com>`. OVH exige un alignement exact
+  entre le domaine du `From` et le compte authentifié — politique
+  anti-usurpation standard chez tout fournisseur SMTP sérieux, pas un
+  défaut du relais.
+- **Décision et correction, à la racine** : création d'un
+  `mail.alias.domain` réel (`name='ankrr.fr'`, `default_from='contact'`),
+  appliqué à **toutes** les sociétés existantes (pas seulement celles de
+  la démo) — plus aucun email sortant, présent ou futur, ne peut retomber
+  sur `odoobot@example.com`. `from_filter` posé également sur le serveur
+  SMTP pour renforcer l'intention.
+- **Revérifié réellement** : les deux factures (CLIM AUTO, COUL) ont été
+  renvoyées après correction — succès annoncé avec prudence cette fois
+  (jamais réaffirmé sans nouvelle preuve), le client invité à confirmer
+  lui-même la réception.
+
+### Incident 12 — société multi-entreprise sans entrepôt
+
+- **Constat réel** : `AssertionError: aucun entrepot pour PAIN & GLACE`
+  en créant le stock initial.
+- **Fausse piste explicitement documentée** : `res.company.
+  create_missing_warehouse()` semblait la bonne méthode (trouvée dans le
+  code source), mais son propre docstring dit "add a warehouse on the
+  FIRST company of the database" — elle ne fait rien dès qu'AU MOINS UN
+  entrepôt existe déjà ailleurs dans la base, même pour une autre
+  société. Corrigé en créant l'entrepôt directement (même schéma
+  qu'Odoo utilise en interne pour la toute première société).
+
+### Incident 13 — société multi-entreprise sans plan comptable
+
+- **Constat réel** : `No journal could be found in company ... for any
+  of those types: sale` en créant une facture pour une société qui vient
+  d'être créée. Corrigé via `env['account.chart.template'].
+  with_company(company).try_loading('generic_coa', company)` — modèle
+  comptable générique réel d'Odoo, utilisé en repli quand aucune
+  localisation dédiée au pays n'existe (aucun `l10n_ci` pour la Côte
+  d'Ivoire dans ce dépôt source).
+
+### 3e entreprise — PAIN & GLACE (boulangerie-glacier)
+
+Société réelle + 6 références produit avec stock réel (remplace
+directement le suivi Excel du comptable) + une facture réelle postée et
+envoyée par email. Argumentaire Enterprise honnête rédigé
+(`docs/AVANTAGES_LICENCE_ENTERPRISE.md`) : seulement les modules
+réellement pertinents pour ce métier précis, jamais un argumentaire
+générique.
+
+### Modules ajoutés à la liste "reste actif en permanence"
+
+`account` (COMPTA) et `stock` (STOCK) rejoignent `mail`, `hr`, `crm`,
+`hr_holidays`, `hr_recruitment` dans `MOD_ALL_CLEANUP_FINAL.sh` — ils
+portent désormais de vraies factures postées et un vrai stock, que la
+désinstallation détruirait réellement (voir Incident 10, découvert plus
+tôt dans la journée).
+
 ## Ce qui n'a volontairement PAS été commencé cette nuit
 
 - **Tier 1 (modules par domaine métier)** et **Tier 2 (jobs RUN de
