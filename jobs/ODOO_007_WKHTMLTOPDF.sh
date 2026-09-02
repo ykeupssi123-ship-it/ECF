@@ -41,5 +41,29 @@ if ! command -v wkhtmltopdf >/dev/null 2>&1; then
   exit 1
 fi
 
+# CORRIGE le 2026-09-01 (echec reel decouvert en generant une vraie
+# facture PDF, voir docs/JOURNAL_TECHNIQUE.md) : le paquet wkhtmltox
+# installe ses binaires dans /usr/local/bin, jamais /usr/bin. "root" (et
+# donc ce job, et la verification ci-dessus) a bien /usr/local/bin dans
+# son PATH et voit la commande - mais Odoo tourne comme l'utilisateur
+# systeme "odoo", dont le PATH via sudo (secure_path) EXCLUT
+# /usr/local/bin : Odoo levait "Unable to find Wkhtmltopdf on this
+# system" malgre un binaire reellement present et fonctionnel. Meme
+# categorie de piege que le Python 3.11 compile plus tot ce jour-la
+# (ODOO_006/ODOO_010) - desormais verifie systematiquement du point de
+# vue du VRAI utilisateur d'execution, jamais seulement root. Lien
+# symbolique vers /usr/bin (present dans TOUT PATH raisonnable, quel que
+# soit l'utilisateur) plutot que de modifier le PATH d'odoo lui-meme -
+# solution la plus simple et la plus robuste.
+echo "[ODOO_007] Lien symbolique vers /usr/bin (accessible a tout utilisateur, y compris 'odoo')..."
+ln -sf "$(command -v wkhtmltopdf)" /usr/bin/wkhtmltopdf
+ln -sf "$(command -v wkhtmltoimage)" /usr/bin/wkhtmltoimage
+
+echo "[ODOO_007] Verification reelle du point de vue de l'utilisateur odoo..."
+if ! sudo -u "${ODOO_USER}" wkhtmltopdf --version >/dev/null 2>&1; then
+  echo "[ODOO_007] ERREUR : wkhtmltopdf reste introuvable pour l'utilisateur ${ODOO_USER} apres le lien symbolique." >&2
+  exit 1
+fi
+
 echo "[ODOO_007] OK ($(wkhtmltopdf --version | head -1))."
 exit 0

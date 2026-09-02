@@ -654,6 +654,30 @@ portent désormais de vraies factures postées et un vrai stock, que la
 désinstallation détruirait réellement (voir Incident 10, découvert plus
 tôt dans la journée).
 
+### Incident 14 — PDF de facture introuvable : wkhtmltopdf invisible pour l'utilisateur odoo
+
+- **Constat réel, en générant la première vraie facture PDF** :
+  `odoo.exceptions.UserError: Unable to find Wkhtmltopdf on this system`
+  alors que `wkhtmltopdf --version` fonctionne parfaitement en root.
+- **Cause racine, vérifiée directement** : `which wkhtmltopdf` en root →
+  `/usr/local/bin/wkhtmltopdf` ; le même test via `sudo -u odoo` →
+  introuvable. Le paquet `wkhtmltox` installe ses binaires dans
+  `/usr/local/bin`, absent du PATH restreint (secure_path) de
+  l'utilisateur système `odoo`. Exactement la même famille de piège que
+  Python 3.11 plus tôt dans la journée (Incidents 6-7) : une vérification
+  faite uniquement en root ne prouve rien pour l'utilisateur réel
+  d'exécution.
+- **Décision** : lien symbolique vers `/usr/bin` (présent dans tout PATH
+  raisonnable) plutôt que de modifier le PATH d'odoo — solution la plus
+  simple et robuste. `ODOO_007_WKHTMLTOPDF.sh` vérifie désormais
+  explicitement `sudo -u "${ODOO_USER}" wkhtmltopdf --version` avant de
+  se déclarer OK, jamais seulement la vue de root.
+- **Conséquence découverte en marge** : les 3 factures envoyées par
+  email plus tôt dans la journée l'ont été alors que ce défaut existait
+  déjà — pièce jointe PDF potentiellement invalide ou absente. Les 3
+  ont été renvoyées après correction, plus jamais réaffirmé un succès
+  sans literally re-tester.
+
 ## Ce qui n'a volontairement PAS été commencé cette nuit
 
 - **Tier 1 (modules par domaine métier)** et **Tier 2 (jobs RUN de
