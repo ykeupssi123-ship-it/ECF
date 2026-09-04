@@ -39,7 +39,7 @@ OPERATIONS_DIR="${ODOO_HOME}/operations"
 
 # Codes courts des 34 modules (identiques a la colonne SERVICE de
 # jobs_table.csv - jamais une seconde liste maintenue a la main).
-MODULE_CODES="$(awk -F',' 'NR>1 && $9!="SYS" && $9!~/^ILL_/ {if (!seen[$9]++) print tolower($9)}' "$PROJECT_ROOT/jobs_table.csv")"
+MODULE_CODES="$(awk -F',' 'NR>1 && $9!="SYS" && $9!~/^ILL/ {if (!seen[$9]++) print tolower($9)}' "$PROJECT_ROOT/jobs_table.csv")"
 
 echo "[SOPD] Construction de l'arborescence operationnelle sous ${OPERATIONS_DIR}..."
 mkdir -p "$OPERATIONS_DIR"

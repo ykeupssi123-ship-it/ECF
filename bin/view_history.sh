@@ -140,7 +140,11 @@ if [ -z "$LINE" ]; then
 fi
 
 LOGFILE=$(echo "$LINE" | awk -F',' '{print $5}')
+PATHS_TOUCHED=$(echo "$LINE" | awk -F',' '{print $7}')
 echo "=== $JOB_ID - $(echo "$LINE" | awk -F',' '{print $1}') -> $(echo "$LINE" | awk -F',' '{print $4}') ==="
+if [ -n "$PATHS_TOUCHED" ]; then
+  echo "Chemin(s) \$ECFOP touche(s) : ${PATHS_TOUCHED//;/, }"
+fi
 echo "--- log complet de cette execution ---"
 if [ -f "$LOGFILE" ]; then
   cat "$LOGFILE"

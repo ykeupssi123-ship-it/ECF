@@ -1,17 +1,17 @@
 #!/bin/bash
-# ECFRFAC1 - ECF_CLIMAUTO_RUN_FACTUREMAIL - Illustration
+# ECFRFAC1 - ECF_ILL1_RUN_FACTUREMAIL - Illustration
 # de bout en bout : cree une facture reelle CLIM AUTO (reparation
 # climatisation auto), la valide, genere le PDF (wkhtmltopdf), et
 # l'envoie REELLEMENT par email via le serveur SMTP reel (contact@ankrr.fr
 # comme destinataire, pour verification directe par l'operateur).
 #
-# IN_COND=ODOO_MAIL_SERVER_REAL_OK|COMPTA_ACTIVE|ILL_CLIMAUTO_SOCIETE_OK
+# IN_COND=ODOO_MAIL_SERVER_REAL_OK|COMPTA_ACTIVE|ILL1_SOCIETE_OK
 set -uo pipefail
 source "$VARS_FILE"
 PROJECT_ROOT="$(dirname "$VARS_FILE")"
 source "$PROJECT_ROOT/lib/commun.sh"
 
-echo "[ILL_CLIMAUTO_FACTURE_MAIL] Creation et envoi reel d'une facture CLIM AUTO..."
+echo "[ILL1_FACTURE_MAIL] Creation et envoi reel d'une facture CLIM AUTO..."
 OUT="$(_odoo_shell_exec "
 company = env['res.company'].search([('name', '=', 'CLIM AUTO')], limit=1)
 assert company, 'societe CLIM AUTO introuvable'
@@ -80,9 +80,9 @@ env.cr.commit()
 echo "$OUT"
 
 if ! echo "$OUT" | grep -q "email envoye pour facture"; then
-  echo "[ILL_CLIMAUTO_FACTURE_MAIL] ERREUR : l'envoi de la facture par email a echoue." >&2
+  echo "[ILL1_FACTURE_MAIL] ERREUR : l'envoi de la facture par email a echoue." >&2
   exit 1
 fi
 
-echo "[ILL_CLIMAUTO_FACTURE_MAIL] OK (facture envoyee reellement a contact@ankrr.fr, verifiez la boite mail)."
+echo "[ILL1_FACTURE_MAIL] OK (facture envoyee reellement a contact@ankrr.fr, verifiez la boite mail)."
 exit 0

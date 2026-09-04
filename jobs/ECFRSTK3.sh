@@ -1,5 +1,5 @@
 #!/bin/bash
-# ECFRSTK3 - ECF_BOULANGERIE_RUN_STOCK - Illustration :
+# ECFRSTK3 - ECF_ILL3_RUN_STOCK - Illustration :
 # cree les produits reels de PAIN & GLACE (boulangerie + glacier) et
 # leur stock initial dans Odoo Inventory - remplace directement le
 # suivi Excel du comptable rencontre par le client. IN_COND=STOCK_ACTIVE.
@@ -8,10 +8,10 @@ source "$VARS_FILE"
 PROJECT_ROOT="$(dirname "$VARS_FILE")"
 source "$PROJECT_ROOT/lib/commun.sh"
 
-echo "[ILL_BOULANGERIE_STOCK] Creation des produits et du stock initial PAIN & GLACE..."
+echo "[ILL3_STOCK] Creation des produits et du stock initial PAIN & GLACE..."
 OUT="$(_odoo_shell_exec "
 company = env['res.company'].search([('name', '=', 'PAIN & GLACE')], limit=1)
-assert company, 'societe PAIN & GLACE introuvable - jouer ILL_BOULANGERIE_SOCIETE d abord'
+assert company, 'societe PAIN & GLACE introuvable - jouer ILL3_SOCIETE d abord'
 
 # CORRIGE le 2026-09-01, 2e fois (1ere tentative fausse piste :
 # create_missing_warehouse() lu dans le code source mais son propre
@@ -72,16 +72,16 @@ env.cr.commit()
 echo "$OUT"
 
 if ! echo "$OUT" | grep -q "RESULTAT:"; then
-  echo "[ILL_BOULANGERIE_STOCK] ERREUR : creation des produits/stock echouee." >&2
+  echo "[ILL3_STOCK] ERREUR : creation des produits/stock echouee." >&2
   exit 1
 fi
 
-echo "[ILL_BOULANGERIE_STOCK] Verification reelle en base..."
+echo "[ILL3_STOCK] Verification reelle en base..."
 NB="$(PGPASSWORD="$(read_or_generate_secret "$PG_ODOO_DB_PASSWORD_FILE" non)" psql -h 127.0.0.1 -U "${PG_ODOO_DB_USER}" -d "${PG_ODOO_DB_NAME}" -tAc "SELECT count(*) FROM stock_quant q JOIN product_product pp ON pp.id=q.product_id JOIN product_template pt ON pt.id=pp.product_tmpl_id WHERE pt.company_id=(SELECT id FROM res_company WHERE name='PAIN & GLACE') AND q.quantity > 0;")"
 if [ "${NB:-0}" -lt 6 ]; then
-  echo "[ILL_BOULANGERIE_STOCK] ERREUR : seulement ${NB:-0}/6 lignes de stock trouvees en base." >&2
+  echo "[ILL3_STOCK] ERREUR : seulement ${NB:-0}/6 lignes de stock trouvees en base." >&2
   exit 1
 fi
 
-echo "[ILL_BOULANGERIE_STOCK] OK (${NB} references en stock, verifie en base)."
+echo "[ILL3_STOCK] OK (${NB} references en stock, verifie en base)."
 exit 0

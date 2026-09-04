@@ -1,5 +1,5 @@
 #!/bin/bash
-# ECFRCRM2 - ECF_COUL_RUN_CRMPISTES - Illustration : cree un
+# ECFRCRM2 - ECF_ILL2_RUN_CRMPISTES - Illustration : cree un
 # pipeline commercial fictif realiste pour COUL (parfumerie - vente
 # detail et grossiste) - reponse directe a la demande du client de
 # mettre en avant le volet CRM. IN_COND=CRM_ACTIVE.
@@ -8,10 +8,10 @@ source "$VARS_FILE"
 PROJECT_ROOT="$(dirname "$VARS_FILE")"
 source "$PROJECT_ROOT/lib/commun.sh"
 
-echo "[ILL_COUL_CRM_PISTES] Creation du pipeline CRM COUL..."
+echo "[ILL2_CRM_PISTES] Creation du pipeline CRM COUL..."
 _odoo_shell_exec "
 company = env['res.company'].search([('name', '=', 'COUL')], limit=1)
-assert company, 'societe COUL introuvable - jouer ILL_COUL_SOCIETE d abord'
+assert company, 'societe COUL introuvable - jouer ILL2_SOCIETE d abord'
 Lead = env['crm.lead']
 stage_new = env['crm.stage'].search([('name', '=', 'New')], limit=1)
 stage_qualified = env['crm.stage'].search([('name', '=', 'Qualified')], limit=1)
@@ -34,12 +34,12 @@ env.cr.commit()
 print('RESULTAT:', cree, 'nouvelles pistes creees')
 "
 
-echo "[ILL_COUL_CRM_PISTES] Verification reelle en base..."
+echo "[ILL2_CRM_PISTES] Verification reelle en base..."
 NB="$(PGPASSWORD="$(read_or_generate_secret "$PG_ODOO_DB_PASSWORD_FILE" non)" psql -h 127.0.0.1 -U "${PG_ODOO_DB_USER}" -d "${PG_ODOO_DB_NAME}" -tAc "SELECT count(*) FROM crm_lead l JOIN res_company c ON c.id=l.company_id WHERE c.name='COUL';")"
 if [ "${NB:-0}" -lt 4 ]; then
-  echo "[ILL_COUL_CRM_PISTES] ERREUR : seulement ${NB:-0}/4 pistes trouvees en base." >&2
+  echo "[ILL2_CRM_PISTES] ERREUR : seulement ${NB:-0}/4 pistes trouvees en base." >&2
   exit 1
 fi
 
-echo "[ILL_COUL_CRM_PISTES] OK (${NB} pistes COUL en base)."
+echo "[ILL2_CRM_PISTES] OK (${NB} pistes COUL en base)."
 exit 0

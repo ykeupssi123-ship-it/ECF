@@ -27,8 +27,9 @@
 # Usage : ./generer_export_visio.sh [fichier_sortie.csv]
 set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-JOBS_CSV="$SCRIPT_DIR/jobs_table.csv"
-OUT_FILE="${1:-$SCRIPT_DIR/docs/CARTOGRAPHIE_VISIO_SERVICES.csv}"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+JOBS_CSV="$PROJECT_ROOT/jobs_table.csv"
+OUT_FILE="${1:-$PROJECT_ROOT/docs/CARTOGRAPHIE_VISIO_SERVICES.csv}"
 
 [ -f "$JOBS_CSV" ] || { echo "ERREUR : $JOBS_CSV introuvable." >&2; exit 1; }
 
@@ -47,8 +48,8 @@ declare -A LABEL=(
   [CM]="Competences" [PJ]="Projets" [TD]="Todo" [MT]="Maintenance"
   [SN]="Sondages" [CN]="Cantine" [LC]="Live chat" [EM]="Email marketing"
   [SM]="SMS marketing" [CK]="Cartes marketing" [RY]="Recyclage donnees"
-  [ILL_CLIMAUTO]="Illustration - CLIM AUTO" [ILL_COUL]="Illustration - COUL"
-  [ILL_BOULANGERIE]="Illustration - PAIN & GLACE"
+  [ILL1]="Illustration - CLIM AUTO" [ILL2]="Illustration - COUL"
+  [ILL3]="Illustration - PAIN & GLACE"
 )
 declare -A GROUP=(
   [SYS]="Tier 0 - Systeme"
@@ -98,7 +99,7 @@ MAX_CONN=40
     if [ "$SVC" = "SYS" ]; then
       SHAPE="Predefined process"
       GRP="Tier 0 - Systeme"
-    elif [[ "$SVC" == ILL_* ]]; then
+    elif [[ "$SVC" == ILL* ]]; then
       SHAPE="Process"
       GRP="Tier 2 - Illustration"
     else

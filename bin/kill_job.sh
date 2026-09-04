@@ -47,7 +47,7 @@ fi
 
 OPERATEUR="$(whoami)@$(hostname 2>/dev/null || echo host-inconnu)"
 HISTORY_LEDGER="$STATE_DIR/JOBS_HISTORY.csv"
-[ -f "$HISTORY_LEDGER" ] || echo "TIMESTAMP,JOB_ID,JOB_NAME,RESULT,LOG_FILE" > "$HISTORY_LEDGER"
+[ -f "$HISTORY_LEDGER" ] || echo "TIMESTAMP,JOB_ID,JOB_NAME,RESULT,LOG_FILE,DURATION_SEC,PATH_TOUCHED" > "$HISTORY_LEDGER"
 
 echo "Envoi de SIGTERM (arret propre) au PID $PID..."
 kill -TERM "$PID" 2>/dev/null || true
@@ -65,10 +65,10 @@ fi
 rm -f "$RUNNING_MARK"
 if pid_alive "$PID"; then
   echo "$JOB_ID -> ECHEC DU KILL, le processus $PID resiste encore. Investiguer manuellement." >&2
-  echo "$(date -Iseconds),$JOB_ID,$JOB_ID,KILL_ECHEC,-," >> "$HISTORY_LEDGER"
+  echo "$(date -Iseconds),$JOB_ID,$JOB_ID,KILL_ECHEC,-,," >> "$HISTORY_LEDGER"
   exit 1
 fi
 
 echo "$JOB_ID (PID $PID) TUE par $OPERATEUR le $(date -Iseconds)."
-echo "$(date -Iseconds),$JOB_ID,$JOB_ID,TUE,-," >> "$HISTORY_LEDGER"
+echo "$(date -Iseconds),$JOB_ID,$JOB_ID,TUE,-,," >> "$HISTORY_LEDGER"
 echo "Marque TUE dans l'historique (jamais confondu avec un ECHEC naturel du script) : ./bin/view_history.sh $JOB_ID"

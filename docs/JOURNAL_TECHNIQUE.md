@@ -757,3 +757,33 @@ tôt dans la journée).
   au-delà du mandat "ERP_CRM_FACTORY autonome" confié pour cette session.
 - **Pas de construction du Tier 1** (modules) tant que le Tier 0 n'est pas
   intégralement vert et vérifié — respect strict de l'ordre déjà établi.
+
+---
+
+## 2026-09-04 — Illustration générique (ILL1/ILL2/ILL3), PATH_TOUCHED, bug des générateurs
+
+- **Jobs d'illustration renommés** : `JOB_NAME`/`SERVICE`/`IN_COND`/
+  `OUT_COND` des 13 jobs `ECFR*` d'illustration portaient le nom du
+  client en clair (`ECF_CLIMAUTO_RUN_SOCIETE`, `ILL_CLIMAUTO_SOCIETE_OK`).
+  Corrigé (constat utilisateur) : renommé en `ILL1`/`ILL2`/`ILL3` —
+  le câblage d'un job ne doit jamais porter le nom d'un client réel,
+  pour permettre de dupliquer un fichier de job et l'adapter à un
+  nouveau client sans réécrire une chaîne de conditions. Le nom réel
+  (CLIM AUTO, COUL, PAIN & GLACE) reste uniquement dans `DESC` (texte
+  libre). Voir `docs/CONVENTION_NOMMAGE.md`.
+- **Bug réel trouvé et corrigé** : `bin/generer_export_visio.sh` et
+  `bin/generer_export_controlm.sh` cherchaient `jobs_table.csv` et
+  écrivaient `docs/` sous `bin/` (`SCRIPT_DIR` non corrigé lors de la
+  réorganisation de la racine du 1er septembre) — les deux scripts
+  échouaient silencieusement à toute exécution depuis la réorganisation.
+  Corrigé (`PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"`), les deux
+  générateurs vérifiés en réel (38 services, 105 jobs).
+- **`PATH_TOUCHED` ajouté au registre d'audit** (`state/JOBS_HISTORY.csv`,
+  7ᵉ colonne) — motivé par une pratique réelle du CBS Amplitude (SGABS) :
+  savoir quel chemin exact a été touché par quelle opération. Contrat
+  opt-in via `$ECF_JOB_PATHS_FILE` (exporté avant chaque lancement de
+  job par `orchestrator.sh`, `bin/run_now.sh`, `bin/rerun_job.sh`,
+  `bin/order_job.sh`). Au passage, corrigé l'en-tête du ledger qui
+  omettait déjà `DURATION_SEC` (écrit depuis le 2026-08-12 sans jamais
+  figurer dans l'en-tête) dans les 6 scripts qui l'écrivent. Voir
+  `docs/CONVENTION_NOMMAGE.md`.

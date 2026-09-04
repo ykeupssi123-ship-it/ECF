@@ -1,16 +1,16 @@
 #!/bin/bash
-# ECFRFAC3 - ECF_BOULANGERIE_RUN_FACTUREMAIL -
+# ECFRFAC3 - ECF_ILL3_RUN_FACTUREMAIL -
 # Illustration de bout en bout : facture reelle PAIN & GLACE (commande
 # grossiste d'un hotel), validee et envoyee REELLEMENT par email -
 # demontre au comptable ce qu'Odoo remplace de son suivi Excel.
 #
-# IN_COND=ODOO_MAIL_SERVER_REAL_OK|COMPTA_ACTIVE|ILL_BOULANGERIE_STOCK_OK
+# IN_COND=ODOO_MAIL_SERVER_REAL_OK|COMPTA_ACTIVE|ILL3_STOCK_OK
 set -uo pipefail
 source "$VARS_FILE"
 PROJECT_ROOT="$(dirname "$VARS_FILE")"
 source "$PROJECT_ROOT/lib/commun.sh"
 
-echo "[ILL_BOULANGERIE_FACTURE_MAIL] Creation et envoi reel d'une facture PAIN & GLACE..."
+echo "[ILL3_FACTURE_MAIL] Creation et envoi reel d'une facture PAIN & GLACE..."
 OUT="$(_odoo_shell_exec "
 company = env['res.company'].search([('name', '=', 'PAIN & GLACE')], limit=1)
 assert company, 'societe PAIN & GLACE introuvable'
@@ -51,7 +51,7 @@ elif invoice.state == 'draft':
 
 print('RESULTAT: facture', invoice.name or invoice.id, 'total', invoice.amount_total, 'etat', invoice.state)
 
-# CORRIGE le 2026-09-02 (voir ILL_CLIMAUTO_FACTURE_MAIL.sh pour le
+# CORRIGE le 2026-09-02 (voir ILL1_FACTURE_MAIL.sh pour le
 # detail complet) : piece jointe PDF reellement attachee + langue
 # francaise.
 template = env.ref('account.email_template_edi_invoice', raise_if_not_found=False)
@@ -66,9 +66,9 @@ env.cr.commit()
 echo "$OUT"
 
 if ! echo "$OUT" | grep -q "email envoye pour facture"; then
-  echo "[ILL_BOULANGERIE_FACTURE_MAIL] ERREUR : l'envoi de la facture par email a echoue." >&2
+  echo "[ILL3_FACTURE_MAIL] ERREUR : l'envoi de la facture par email a echoue." >&2
   exit 1
 fi
 
-echo "[ILL_BOULANGERIE_FACTURE_MAIL] OK (facture envoyee reellement a contact@ankrr.fr)."
+echo "[ILL3_FACTURE_MAIL] OK (facture envoyee reellement a contact@ankrr.fr)."
 exit 0

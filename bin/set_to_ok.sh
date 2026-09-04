@@ -54,7 +54,7 @@ JOBS_CSV="$HERE/jobs_table.csv"
 HISTORY_DIR="$STATE_DIR/history"
 HISTORY_LEDGER="$STATE_DIR/JOBS_HISTORY.csv"
 mkdir -p "$HISTORY_DIR"
-[ -f "$HISTORY_LEDGER" ] || echo "TIMESTAMP,JOB_ID,JOB_NAME,RESULT,LOG_FILE" > "$HISTORY_LEDGER"
+[ -f "$HISTORY_LEDGER" ] || echo "TIMESTAMP,JOB_ID,JOB_NAME,RESULT,LOG_FILE,DURATION_SEC,PATH_TOUCHED" > "$HISTORY_LEDGER"
 
 LINE=""
 while IFS=',' read -r C_JOB_ID C_JOB_NAME C_JOB_ROLE C_COMPONENT C_SCRIPT_FILE C_DESC C_IN_COND C_OUT_COND C_SERVICE; do
@@ -115,7 +115,7 @@ JOB_LOG="$HISTORY_DIR/$JOB_ID/${JOB_TS}.log"
 } > "$JOB_LOG"
 
 mark_done "$C_OUT_COND"
-echo "$(date -Iseconds),$JOB_ID,$C_JOB_NAME,MARQUE_FAIT,$JOB_LOG" >> "$HISTORY_LEDGER"
+echo "$(date -Iseconds),$JOB_ID,$C_JOB_NAME,MARQUE_FAIT,$JOB_LOG,," >> "$HISTORY_LEDGER"
 echo ""
 echo "$JOB_ID -> MARQUE_FAIT ($C_OUT_COND). Marque distinctement dans l'historique"
 echo "(jamais confondu avec une execution reelle) : ./bin/view_history.sh $JOB_ID"

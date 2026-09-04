@@ -22,8 +22,9 @@
 # Par defaut : docs/CONTROLM_EXPORT.xml
 set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-JOBS_CSV="$SCRIPT_DIR/jobs_table.csv"
-OUT_FILE="${1:-$SCRIPT_DIR/docs/CONTROLM_EXPORT.xml}"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+JOBS_CSV="$PROJECT_ROOT/jobs_table.csv"
+OUT_FILE="${1:-$PROJECT_ROOT/docs/CONTROLM_EXPORT.xml}"
 
 [ -f "$JOBS_CSV" ] || { echo "ERREUR : $JOBS_CSV introuvable." >&2; exit 1; }
 

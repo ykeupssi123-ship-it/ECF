@@ -48,7 +48,7 @@ HISTORY_DIR="$STATE_DIR/history"
 HISTORY_LEDGER="$STATE_DIR/JOBS_HISTORY.csv"
 RUNNING_DIR="$STATE_DIR/RUNNING"
 mkdir -p "$HISTORY_DIR" "$RUNNING_DIR" "$WORK_TMP_DIR"
-[ -f "$HISTORY_LEDGER" ] || echo "TIMESTAMP,JOB_ID,JOB_NAME,RESULT,LOG_FILE" > "$HISTORY_LEDGER"
+[ -f "$HISTORY_LEDGER" ] || echo "TIMESTAMP,JOB_ID,JOB_NAME,RESULT,LOG_FILE,DURATION_SEC,PATH_TOUCHED" > "$HISTORY_LEDGER"
 
 LINE=""
 while IFS=',' read -r C_JOB_ID C_JOB_NAME C_JOB_ROLE C_COMPONENT C_SCRIPT_FILE C_DESC C_IN_COND C_OUT_COND C_SERVICE; do
@@ -131,6 +131,9 @@ JOB_LOG="$HISTORY_DIR/$JOB_ID/${JOB_TS}.log"
   echo "=== Sortie reelle du job ==="
 } > "$JOB_LOG"
 
+JOB_PATHS_FILE="$HISTORY_DIR/$JOB_ID/${JOB_TS}.paths"
+export ECF_JOB_PATHS_FILE="$JOB_PATHS_FILE"
+
 JOB_START_EPOCH=$(date +%s)
 # < /dev/null : meme correctif que orchestrator.sh (incident reel
 # ERP_CRM_FACTORY, 2026-09-01 - voir docs/JOURNAL_TECHNIQUE.md) - un job
@@ -144,6 +147,8 @@ wait "$JOB_PID"
 JOB_EXIT=$?
 rm -f "$RUNNING_DIR/${JOB_ID}.running"
 JOB_DURATION_SEC=$(( $(date +%s) - JOB_START_EPOCH ))
+PATH_TOUCHED=""
+[ -s "$JOB_PATHS_FILE" ] && PATH_TOUCHED="$(paste -sd';' "$JOB_PATHS_FILE")"
 
 echo "--- Sortie de $JOB_ID ---"
 cat "$JOB_LOG"
@@ -151,12 +156,12 @@ echo "--- Fin de sortie ---"
 
 if [ $JOB_EXIT -eq 0 ]; then
   mark_done "$C_OUT_COND"
-  echo "$(date -Iseconds),$JOB_ID,$C_JOB_NAME,FORCE_OK,$JOB_LOG,$JOB_DURATION_SEC" >> "$HISTORY_LEDGER"
+  echo "$(date -Iseconds),$JOB_ID,$C_JOB_NAME,FORCE_OK,$JOB_LOG,$JOB_DURATION_SEC,$PATH_TOUCHED" >> "$HISTORY_LEDGER"
   echo "$JOB_ID -> FORCE_OK ($C_OUT_COND). Marque distinctement dans l'historique"
   echo "(jamais confondu avec une execution normale) : ./bin/view_history.sh $JOB_ID"
   exit 0
 else
-  echo "$(date -Iseconds),$JOB_ID,$C_JOB_NAME,FORCE_ECHEC,$JOB_LOG,$JOB_DURATION_SEC" >> "$HISTORY_LEDGER"
+  echo "$(date -Iseconds),$JOB_ID,$C_JOB_NAME,FORCE_ECHEC,$JOB_LOG,$JOB_DURATION_SEC,$PATH_TOUCHED" >> "$HISTORY_LEDGER"
   echo "$JOB_ID -> FORCE_ECHEC. Voir $JOB_LOG."
   if [ -x "$HERE/notifier.sh" ]; then
     "$HERE/notifier.sh" "$JOB_ID" "$C_JOB_NAME (FORCAGE MANUEL)" "FORCE_ECHEC" "$JOB_LOG" || true

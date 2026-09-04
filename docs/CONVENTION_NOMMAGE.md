@@ -139,6 +139,29 @@ Règle retenue pour tout futur job d'import construit sur `$ECFOP`
 la moindre ligne - échouer bruyamment et tôt si l'en-tête ne
 correspond pas, jamais deviner ou tenter un traitement partiel.
 
+### Traçabilité chemin/opération (`PATH_TOUCHED`) - ajouté le 4 septembre 2026
+
+Motivé par une pratique réelle observée sur le CBS Amplitude (SGABS) :
+la base du CBS savait répondre "quel chemin Linux exact a été touché
+par quelle opération" sans grep les scripts. Côté ECF, `orchestrator.sh`
+tenait déjà un registre d'audit (`state/JOBS_HISTORY.csv`,
+`HISTORY_LEDGER`) mais sans le chemin touché. Corrigé : la colonne
+`PATH_TOUCHED` (7ᵉ colonne du ledger) est alimentée par un contrat
+simple et **opt-in** — un job qui lit/écrit sous `$ECFOP` déclare le(s)
+chemin(s) exact(s) touché(s) en les écrivant (un par ligne) dans le
+fichier désigné par la variable d'environnement `$ECF_JOB_PATHS_FILE`,
+exportée par l'orchestrateur (et par `bin/run_now.sh`,
+`bin/rerun_job.sh`, `bin/order_job.sh`) avant chaque lancement de job.
+Rien n'oblige un job à s'en servir : les 105 jobs actuels n'y écrivent
+rien, la colonne reste vide jusqu'aux premiers vrais jobs
+d'import/export. Consultable via `./bin/view_history.sh <JOB_ID>`.
+Exemple pour un futur job d'import (voir règle de validation d'en-tête
+ci-dessus) :
+
+```bash
+echo "$ECFOP/vt/rcv/clients_20260904.csv" >> "$ECF_JOB_PATHS_FILE"
+```
+
 **Lien direct avec les futurs jobs (pas qu'une convention passive)** :
 ces dossiers n'existent QUE pour être lus/écrits par de vrais jobs -
 en croisant `docs/MATRICE_MBTI_ODOO.xlsx`, catégorie
@@ -165,13 +188,32 @@ réelles d'Odoo 19 Community, jamais inventé hors contexte.
 
 Regroupe chaque job dans sa branche fonctionnelle indépendante — le
 même code que le préfixe module du JOB_ID pour un job de module (`CR`
-pour CRM), `SYS` pour les jobs Tier 0, ou `ILL_<ENTITE>` pour les jobs
-d'illustration liés à une société fictive donnée. `orchestrator.sh`
-utilise cette colonne pour l'**isolation de panne par service** : un
-échec sur un service n'arrête plus tout l'orchestrateur, seuls les
-autres jobs du MÊME service sont sautés - tous les autres services
-indépendants continuent d'être tentés jusqu'au bout. Voir l'en-tête de
+pour CRM), `SYS` pour les jobs Tier 0, ou `ILL1`/`ILL2`/`ILL3` pour les
+groupes de jobs d'illustration. `orchestrator.sh` utilise cette
+colonne pour l'**isolation de panne par service** : un échec sur un
+service n'arrête plus tout l'orchestrateur, seuls les autres jobs du
+MÊME service sont sautés - tous les autres services indépendants
+continuent d'être tentés jusqu'au bout. Voir l'en-tête de
 `orchestrator.sh` pour le diagnostic complet de ce correctif.
+
+### Groupes d'illustration : `ILL1`/`ILL2`/`ILL3`, jamais le nom du client (corrigé le 4 septembre 2026)
+
+Les 13 jobs `ECFR*` d'illustration (SOC/EMP/CRM/CNG/REC/STK/FAC) sont
+regroupés en 3 sociétés fictives : `ILL1` = CLIM AUTO, `ILL2` = COUL,
+`ILL3` = PAIN & GLACE. Avant cette date, `JOB_NAME`, `SERVICE`,
+`IN_COND` et `OUT_COND` portaient le nom du client en clair
+(`ECF_CLIMAUTO_RUN_SOCIETE`, `ILL_CLIMAUTO_SOCIETE_OK`...) — repéré
+comme une erreur par l'utilisateur : **le câblage d'un job (son
+identité, ses conditions) ne doit jamais porter le nom d'un client
+réel**, seul le champ `DESC` (texte libre, lu par un humain, jamais
+parsé pour le câblage) le peut. Raison concrète : pour ajouter une 4ᵉ
+société d'illustration, l'exploitant doit pouvoir dupliquer un fichier
+(`ECFRSOC3.sh` → `ECFRSOC4.sh`), changer `DESC` et le contenu du
+script, et écrire simplement `ILL4` en `SERVICE`/`OUT_COND` — jamais
+inventer ou réécrire une chaîne de conditions en aval. `ECFBOPD.sh`
+exclut ces groupes de la construction de `$ECFOP` via le filtre
+`$9!~/^ILL/` (les sociétés d'illustration ne sont pas des modules
+d'échange de fichiers réels).
 
 ## Application à venir (Tier 1 — modules, Tier 2 — démonstration)
 

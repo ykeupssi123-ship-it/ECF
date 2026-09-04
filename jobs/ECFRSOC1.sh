@@ -1,5 +1,5 @@
 #!/bin/bash
-# ECFRSOC1 - ECF_CLIMAUTO_RUN_SOCIETE - Illustration : cree la
+# ECFRSOC1 - ECF_ILL1_RUN_SOCIETE - Illustration : cree la
 # fiche societe reelle "CLIM AUTO" (garage/atelier, Cocody) dans Odoo -
 # socle sur lequel s'appuient les jobs RH/CRM/facturation suivants pour
 # ce client. Idempotent (recherche par nom avant creation).
@@ -8,7 +8,7 @@ source "$VARS_FILE"
 PROJECT_ROOT="$(dirname "$VARS_FILE")"
 source "$PROJECT_ROOT/lib/commun.sh"
 
-echo "[ILL_CLIMAUTO_SOCIETE] Creation/verification de la societe CLIM AUTO..."
+echo "[ILL1_SOCIETE] Creation/verification de la societe CLIM AUTO..."
 _odoo_shell_exec "
 company = env['res.company'].search([('name', '=', 'CLIM AUTO')], limit=1)
 if not company:
@@ -36,12 +36,12 @@ else:
 env.cr.commit()
 "
 
-echo "[ILL_CLIMAUTO_SOCIETE] Verification reelle en base..."
+echo "[ILL1_SOCIETE] Verification reelle en base..."
 EXISTS="$(PGPASSWORD="$(read_or_generate_secret "$PG_ODOO_DB_PASSWORD_FILE" non)" psql -h 127.0.0.1 -U "${PG_ODOO_DB_USER}" -d "${PG_ODOO_DB_NAME}" -tAc "SELECT 1 FROM res_company WHERE name='CLIM AUTO';")"
 if [ "$EXISTS" != "1" ]; then
-  echo "[ILL_CLIMAUTO_SOCIETE] ERREUR : societe CLIM AUTO introuvable en base apres creation." >&2
+  echo "[ILL1_SOCIETE] ERREUR : societe CLIM AUTO introuvable en base apres creation." >&2
   exit 1
 fi
 
-echo "[ILL_CLIMAUTO_SOCIETE] OK."
+echo "[ILL1_SOCIETE] OK."
 exit 0

@@ -69,7 +69,17 @@ REPORT_FILE="$STATE_DIR/RAPPORT_EXECUTION.txt"
 HISTORY_DIR="$STATE_DIR/history"
 HISTORY_LEDGER="$STATE_DIR/JOBS_HISTORY.csv"
 mkdir -p "$HISTORY_DIR"
-[ -f "$HISTORY_LEDGER" ] || echo "TIMESTAMP,JOB_ID,JOB_NAME,RESULT,LOG_FILE" > "$HISTORY_LEDGER"
+# En-tete corrigee le 2026-09-04 (DURATION_SEC manquait deja de l'en-tete
+# alors que les lignes OK/ECHEC l'ecrivaient depuis le 2026-08-12 - jamais
+# bloquant pour bin/view_history.sh, qui lit par position, mais trompeur a
+# la lecture directe du fichier). PATH_TOUCHED ajoutee le meme jour
+# (pratique reelle CBS/SGABS : savoir quel chemin $ECFOP exact a ete
+# touche par quelle execution, sans devoir grep les scripts). Colonne
+# alimentee UNIQUEMENT si le job ecrit dans $ECF_JOB_PATHS_FILE (variable
+# exportee avant chaque lancement, voir plus bas) - aucun job existant
+# n'y ecrit aujourd'hui, la colonne reste vide jusqu'aux premiers vrais
+# jobs d'import/export sur $ECFOP.
+[ -f "$HISTORY_LEDGER" ] || echo "TIMESTAMP,JOB_ID,JOB_NAME,RESULT,LOG_FILE,DURATION_SEC,PATH_TOUCHED" > "$HISTORY_LEDGER"
 
 # Purge automatique de l'historique perime (SYSOUT), ajoutee le
 # 2026-08-12 - equivalent fonctionnel de l'expiration d'une SYSOUT
@@ -254,7 +264,7 @@ for pass in $(seq 1 $MAX_PASSES); do
         echo "s'execute reellement au prochain lancement."
       } > "$JOB_LOG"
       mark_done "$OUT_COND"
-      echo "$(date -Iseconds),$JOB_ID,$JOB_NAME,SAUTE_CONFIG,$JOB_LOG" >> "$HISTORY_LEDGER"
+      echo "$(date -Iseconds),$JOB_ID,$JOB_NAME,SAUTE_CONFIG,$JOB_LOG,," >> "$HISTORY_LEDGER"
       log "$JOB_ID -> SAUTE VOLONTAIREMENT (SKIP_JOBS, vars.conf) - $OUT_COND marque sans execution"
       progressed=1
       continue
@@ -276,6 +286,12 @@ for pass in $(seq 1 $MAX_PASSES); do
     JOB_TS=$(date +%Y%m%d_%H%M%S_%N)
     mkdir -p "$HISTORY_DIR/$JOB_ID"
     JOB_LOG="$HISTORY_DIR/$JOB_ID/${JOB_TS}.log"
+    # PATH_TOUCHED (ajoute le 2026-09-04) : contrat simple, opt-in - un job
+    # qui lit/ecrit sous $ECFOP peut declarer le(s) chemin(s) exact(s)
+    # touches en les ecrivant (un par ligne) dans $ECF_JOB_PATHS_FILE. Rien
+    # n'oblige un job a le faire ; la plupart n'ont rien a y ecrire.
+    JOB_PATHS_FILE="$HISTORY_DIR/$JOB_ID/${JOB_TS}.paths"
+    export ECF_JOB_PATHS_FILE="$JOB_PATHS_FILE"
 
     # Lance en arriere-plan uniquement pour recuperer le PID reel du
     # job (necessaire pour que bin/monitoring.sh puisse verifier si un
@@ -313,13 +329,20 @@ for pass in $(seq 1 $MAX_PASSES); do
     # fois termine, aucune alerte pendant qu'il tournait).
     JOB_DURATION_SEC=$(( $(date +%s) - JOB_START_EPOCH ))
     cat "$JOB_LOG" >> "$RUN_LOG"
+    # Chemin(s) declares par le job (voir JOB_PATHS_FILE ci-dessus) - joints
+    # par ";" (jamais une virgule, qui casserait le parsing positionnel du
+    # CSV). Vide si le job n'a rien declare (cas normal aujourd'hui).
+    PATH_TOUCHED=""
+    if [ -s "$JOB_PATHS_FILE" ]; then
+      PATH_TOUCHED="$(paste -sd';' "$JOB_PATHS_FILE")"
+    fi
     if [ $JOB_EXIT -eq 0 ]; then
       mark_done "$OUT_COND"
-      echo "$(date -Iseconds),$JOB_ID,$JOB_NAME,OK,$JOB_LOG,$JOB_DURATION_SEC" >> "$HISTORY_LEDGER"
+      echo "$(date -Iseconds),$JOB_ID,$JOB_NAME,OK,$JOB_LOG,$JOB_DURATION_SEC,$PATH_TOUCHED" >> "$HISTORY_LEDGER"
       log "$JOB_ID -> OK ($OUT_COND) [historique: ./bin/view_history.sh $JOB_ID]"
       progressed=1
     else
-      echo "$(date -Iseconds),$JOB_ID,$JOB_NAME,ECHEC,$JOB_LOG,$JOB_DURATION_SEC" >> "$HISTORY_LEDGER"
+      echo "$(date -Iseconds),$JOB_ID,$JOB_NAME,ECHEC,$JOB_LOG,$JOB_DURATION_SEC,$PATH_TOUCHED" >> "$HISTORY_LEDGER"
       SVC_LABEL="${SERVICE:-(aucun)}"
       log "$JOB_ID -> ECHEC (service '$SVC_LABEL'). Voir $JOB_LOG (ou $RUN_LOG). Ce service s'arrete, les autres services independants continuent."
       if [ -n "${SERVICE:-}" ]; then
