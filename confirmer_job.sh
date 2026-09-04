@@ -45,7 +45,7 @@ echo "Raison : $RAISON_SAFE"
 
 JOBS_CSV="$HERE/jobs_table.csv"
 LINE=""
-while IFS=',' read -r C_JOB_ID C_JOB_NAME C_JOB_ROLE C_COMPONENT C_SCRIPT_FILE C_DESC C_IN_COND C_OUT_COND; do
+while IFS=',' read -r C_JOB_ID C_JOB_NAME C_JOB_ROLE C_COMPONENT C_SCRIPT_FILE C_DESC C_IN_COND C_OUT_COND C_SERVICE; do
   [ "$C_JOB_ID" = "$JOB_ID" ] && { LINE=1; break; }
 done < "$JOBS_CSV"
 

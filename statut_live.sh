@@ -112,7 +112,7 @@ echo ""
 echo "--- Jobs EN ATTENTE (WAITING - bloques sur une dependance non satisfaite) ---"
 WAITING_FOUND=0
 if [ -f "$JOBS_CSV" ]; then
-  while IFS=',' read -r JOB_ID JOB_NAME JOB_ROLE COMPONENT SCRIPT_FILE DESC IN_COND OUT_COND; do
+  while IFS=',' read -r JOB_ID JOB_NAME JOB_ROLE COMPONENT SCRIPT_FILE DESC IN_COND OUT_COND SERVICE; do
     [ "$JOB_ID" = "JOB_ID" ] && continue
     [ -z "${JOB_ID:-}" ] && continue
     [[ "$JOB_ROLE" != "${ROLE:-}" && "$JOB_ROLE" != "ALL" ]] && continue

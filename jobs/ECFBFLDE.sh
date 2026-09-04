@@ -1,0 +1,21 @@
+#!/bin/bash
+# ECFBFLDE - ECF_FLEET_BLD_DEACTIVATE - Desactivation reelle du module
+# Odoo "fleet" (Gestion de parc de vehicules).
+#
+# Genere le 2026-09-01 - voir lib/commun.sh (odoo_module_deactivate).
+# Reversible : reactivable a tout moment via MOD_FLEET_ACTIVATE.
+set -uo pipefail
+source "$VARS_FILE"
+PROJECT_ROOT="$(dirname "$VARS_FILE")"
+source "$PROJECT_ROOT/lib/commun.sh"
+
+odoo_module_deactivate "fleet"
+
+# CORRIGE le 2026-09-01 (defaut reel trouve en construisant les jobs
+# d'illustration Tier 2, voir docs/JOURNAL_TECHNIQUE.md) : "FLEET_ACTIVE.ok"
+# restait present pour toujours une fois cree - un job desactive puis
+# jamais reactive continuait a etre lu comme "actif" par tout job Tier 2
+# en dependant (IN_COND=FLEET_ACTIVE). Efface ici le marqueur ACTIVE
+# pour que la condition reflete l'etat REEL courant, jamais un historique
+# qui ne fait que s'accumuler.
+rm -f "${STATE_DIR}/FLEET_ACTIVE.ok"

@@ -29,6 +29,81 @@ ECF_<MODULE>_<TIER>_<FONCTION>
 
 Les 20 jobs Tier 0 (installation du système) suivent déjà ce patron : `ECF_SYS_BLD_<FONCTION>` pour la construction, `ECF_SYS_RUN_SYSTEMVERIFY` pour la vérification finale — corrigé le 1er septembre 2026 (portaient par erreur le préfixe `WEF_`, hérité du copier-coller depuis WAZ_ELK_FACTORY, jamais l'identité de ce projet).
 
+## JOB_ID court (colonne 1 de jobs_table.csv) — distinct de JOB_NAME
+
+Le patron `ECF_<MODULE>_<TIER>_<FONCTION>` ci-dessus concerne **JOB_NAME**
+(colonne 2 — le "Memname" recherchable par joker). **JOB_ID** (colonne 1 —
+l'identifiant technique unique, celui qu'on tape dans `forcer_job.sh
+<JOB_ID>`) suit une règle séparée.
+
+**Historique du schéma (deux corrections successives le 4 septembre
+2026)** : d'abord passé de `ODOO_001_OS_UPDATE`/`MOD_CRM_ACTIVATE`
+(trop long, numéro de séquence arbitraire sans signification, fragile
+si un job est inséré/supprimé) à un code 4 caractères sans chiffre
+(`SOSU`, `CRAC`). Puis, après examen d'une vraie capture d'écran
+Control-M de production (job réel `CAMJCSNSIR` : `CAM`=trigramme
+filiale SGCAM, `J`=cycle Jour, `C`=classificateur, `SNSIR`=fonction ;
+autre famille `CAMJDB3510`/`CAMMDB3510` où le chiffre est un numéro de
+traitement reel et le `J`/`M` distingue Jour/Mois), corrigé une
+deuxième fois pour coller fidèlement à cette pratique réelle - jamais
+inventée.
+
+**Schéma définitif** : `ECF` (trigramme du projet - deviendra
+`CLA`/`OCC`/etc. à la phase filiale, exactement comme `CAM` chez
+SGCAM) + 1 lettre de type (`B`=Build/construction, `R`=Run/
+exploitation, `C`=Contrôle) + code fonction court, **tout collé, sans
+tiret ni underscore** (les séparateurs demandent Shift sur clavier
+AZERTY - gênent la saisie répétée en exploitation), chiffres autorisés
+quand ils portent un sens réel (ex. désambiguïser plusieurs instances
+d'un même scénario de démo).
+
+- Jobs Tier 0 (système) : `ECFB` + 3 lettres de fonction (le code
+  système historique, sans son `S` initial) - ex. `ECFBOSU` (OS
+  Update), `ECFBPGI` (PostGres Install), `ECFRVER` (VERify, type Run).
+- Jobs de module (Tier 1) : `ECFB` + 2 lettres de module + 2 lettres de
+  fonction (`AC`/`DE`) - ex. `ECFBCRAC`/`ECFBCRDE` (CRM),
+  `ECFBVTAC`/`ECFBVTDE` (Vente). Table des codes module : voir
+  `jobs_table.csv`, colonne `SERVICE`.
+- Jobs d'illustration (démo) : `ECFR` + fonction + chiffre d'instance
+  (une société fictive = une instance, jamais son nom dans l'ID -
+  reporté à la phase filiale) - ex. `ECFRSOC1`/`ECFRSOC2`/`ECFRSOC3`
+  (création de société, 3 instances), `ECFRFAC1`/`ECFRFAC2`/`ECFRFAC3`
+  (facture par email, 3 instances).
+
+Position du cycle (`J`=Jour, `M`=Mois...) réservée mais non utilisée
+pour l'instant - aucun job réellement récurrent à ce jour dans ECF
+(tout est construction ponctuelle ou démonstration à la demande),
+jamais inventé sans un vrai besoin a distinguer.
+
+Cette table de correspondance (JOB_ID → intitulé complet) est
+disponible en un coup d'oeil via `JOB_NAME` (colonne 2) et `DESC`
+(colonne 6) sur la même ligne - jamais besoin de deviner ce qu'un ID
+court signifie, `jobs_table.csv` reste la référence unique.
+
+## Raccourcis d'exploitation CLI (`env_exploitation.sh`, ajouté le 4 septembre 2026)
+
+Inspiré d'une pratique réelle (Control-M, SGABS/Société Générale) : au
+lieu de mémoriser des chemins complets, l'opérateur utilise des
+variables courtes sourcées dans sa session CLI Linux (ex. `$ECFSEC` au
+lieu de `/opt/odoo/erp_crm_factory/secrets`). Facultatif, jamais un job
+de `jobs_table.csv` (une convention de nommage n'exécute rien) — voir
+`env_exploitation.sh` à la racine du projet, à sourcer manuellement
+(`source env_exploitation.sh`) ou via `~/.bash_profile` pour qu'il soit
+actif à chaque connexion. Chaque raccourci reflète une variable déjà
+définie dans `vars.conf` (source unique de vérité, jamais dupliquée).
+
+## Colonne SERVICE (9ᵉ colonne, ajoutée le 4 septembre 2026)
+
+Regroupe chaque job dans sa branche fonctionnelle indépendante — le
+même code que le préfixe module du JOB_ID pour un job de module (`CR`
+pour CRM), `SYS` pour les jobs Tier 0, ou `ILL_<ENTITE>` pour les jobs
+d'illustration liés à une société fictive donnée. `orchestrator.sh`
+utilise cette colonne pour l'**isolation de panne par service** : un
+échec sur un service n'arrête plus tout l'orchestrateur, seuls les
+autres jobs du MÊME service sont sautés - tous les autres services
+indépendants continuent d'être tentés jusqu'au bout. Voir l'en-tête de
+`orchestrator.sh` pour le diagnostic complet de ce correctif.
+
 ## Application à venir (Tier 1 — modules, Tier 2 — démonstration)
 
 Chaque module suit le même patron, par exemple pour le CRM :

@@ -18,13 +18,28 @@
 #      des machines differentes (c'est aussi possible - a vous de
 #      choisir par machine via AGENT_COMPONENTS dans vars.conf).
 #
-#  ARRET AU PREMIER ECHEC (fail-fast), DELIBERE : les jobs suivants
-#  dependent souvent de la reussite du precedent (config ecrite,
-#  service demarre...) - continuer apres un echec risquerait
-#  d'enchainer des jobs sur une base deja cassee. Chaque machine
-#  (VM1, VM2, chaque hote d'agent) execute SA PROPRE instance de cet
-#  orchestrateur : un echec sur une machine n'arrete jamais les autres,
-#  qui tournent independamment.
+#  ISOLATION DE PANNE PAR SERVICE (corrige le 2026-09-04, incident reel
+#  ERP_CRM_FACTORY) : ce moteur vient de WAZ_ELK_FACTORY tel quel, ou le
+#  comportement d'origine etait "arret au premier echec, deliberement" -
+#  pertinent LA-BAS car les jobs y forment une chaine quasi-lineaire
+#  (chaque service depend reellement du precedent). Ce n'est PLUS vrai
+#  ici : les 34 modules Odoo (colonne SERVICE, jobs_table.csv) sont deja
+#  INDEPENDANTS les uns des autres (meme IN_COND=ODOO_SYSTEME_PRET pour
+#  tous, jamais chaines entre eux) - pourtant un echec sur UN SEUL
+#  module arretait TOUT l'orchestrateur, y compris les 33 autres modules
+#  sans aucun lien avec celui en echec. Corrige : un echec de job marque
+#  desormais UNIQUEMENT son SERVICE comme en echec - les autres jobs de
+#  ce meme service sont sautes (pas de suite possible sur une base
+#  cassee), mais TOUS LES AUTRES SERVICES continuent d'etre tentes
+#  normalement. Un job qui depend REELLEMENT (via IN_COND) d'un service
+#  en echec reste bloque automatiquement par le mecanisme de dependance
+#  deja existant - rien a ajouter pour ce cas, il fonctionnait deja.
+#  Code de sortie final : 1 si au moins un service a echoue (rien de
+#  silencieux), 0 sinon - mais seulement APRES avoir laisse sa chance a
+#  chaque service independant. Chaque machine (VM1, VM2, chaque hote
+#  d'agent) execute SA PROPRE instance de cet orchestrateur : un echec
+#  sur une machine n'arrete jamais les autres, qui tournent
+#  independamment.
 #
 #  A LA FIN (succes OU echec), un rapport est toujours ecrit dans
 #  state/RAPPORT_EXECUTION.txt : jobs termines, job en echec le cas
@@ -85,8 +100,14 @@ cleanup_running(){ rm -f "$ORCH_MARK" "${CURRENT_JOB_MARK:-/dev/null}" 2>/dev/nu
 log(){ echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$RUN_LOG"; }
 mkdir -p "$STATE_DIR/HELD"
 
-FAILED_JOB_ID=""
-FAILED_JOB_NAME=""
+# FAILED_SERVICES : associatif, un service (colonne SERVICE) une fois
+# present ici ne verra plus jamais aucun de ses jobs tentes pour le
+# reste de ce run (voir isolation de panne par service, en-tete
+# ci-dessus). FAILED_JOBS_LOG : liste texte (une ligne par job en
+# echec) pour le rapport final - plusieurs services independants
+# peuvent echouer dans le MEME run, jamais suppose un seul.
+declare -A FAILED_SERVICES=()
+FAILED_JOBS_LOG=""
 
 # Ecrit le rapport final, quelle que soit l'issue (succes, echec, Ctrl+C).
 write_report() {
@@ -100,9 +121,12 @@ write_report() {
     [ "$ROLE" = "AGENT_HOST" ] && echo "Composants  : ${AGENT_COMPONENTS:-(aucun)}"
     echo "Log complet : $RUN_LOG"
     echo ""
-    if [ -n "$FAILED_JOB_ID" ]; then
-      echo "RESULTAT : ARRET SUR ECHEC"
-      echo "Job en echec : $FAILED_JOB_ID ($FAILED_JOB_NAME)"
+    if [ ${#FAILED_SERVICES[@]} -gt 0 ]; then
+      echo "RESULTAT : ${#FAILED_SERVICES[@]} SERVICE(S) EN ECHEC (les autres services independants ont ete tentes jusqu'au bout - voir isolation de panne par service, en-tete du script)"
+      echo "Services en echec : ${!FAILED_SERVICES[*]}"
+      echo ""
+      echo "--- Jobs en echec ---"
+      printf '%b' "$FAILED_JOBS_LOG"
     else
       echo "RESULTAT : TERMINE SANS ECHEC (tous les jobs prets pour ce ROLE/composants ont ete rejoues jusqu'a stabilisation)"
     fi
@@ -116,7 +140,7 @@ write_report() {
     echo ""
     echo "--- JOBS JAMAIS ATTEINTS (dependance non satisfaite, ou apres l'echec) ---"
     NOT_REACHED=0
-    while IFS=',' read -r JOB_ID JOB_NAME JOB_ROLE COMPONENT SCRIPT_FILE DESC IN_COND OUT_COND; do
+    while IFS=',' read -r JOB_ID JOB_NAME JOB_ROLE COMPONENT SCRIPT_FILE DESC IN_COND OUT_COND SERVICE; do
       [ "$JOB_ID" = "JOB_ID" ] && continue
       [ -z "${JOB_ID:-}" ] && continue
       [[ "$JOB_ROLE" != "$ROLE" && "$JOB_ROLE" != "ALL" ]] && continue
@@ -153,7 +177,7 @@ fi
 MAX_PASSES=30
 for pass in $(seq 1 $MAX_PASSES); do
   progressed=0
-  while IFS=',' read -r JOB_ID JOB_NAME JOB_ROLE COMPONENT SCRIPT_FILE DESC IN_COND OUT_COND; do
+  while IFS=',' read -r JOB_ID JOB_NAME JOB_ROLE COMPONENT SCRIPT_FILE DESC IN_COND OUT_COND SERVICE; do
     [ "$JOB_ID" = "JOB_ID" ] && continue
     [ -z "${JOB_ID:-}" ] && continue
     [[ "$JOB_ROLE" != "$ROLE" && "$JOB_ROLE" != "ALL" ]] && continue
@@ -170,6 +194,16 @@ for pass in $(seq 1 $MAX_PASSES); do
       done
     fi
     [ $ready -eq 0 ] && continue
+
+    # ISOLATION DE PANNE PAR SERVICE (voir en-tete du script) : ce job
+    # appartient a un service deja marque en echec plus tot dans CE
+    # meme run - jamais tente (pas de suite possible sur une base
+    # cassee au sein du MEME service), mais ne bloque JAMAIS les autres
+    # services independants qui continuent normalement.
+    if [ -n "${SERVICE:-}" ] && [ -n "${FAILED_SERVICES[$SERVICE]:-}" ]; then
+      log "$JOB_ID -> SAUTE (service '$SERVICE' deja en echec dans ce run)"
+      continue
+    fi
 
     # GEL MANUEL (HELD), ajoute le 2026-08-12 : un job pret (dependances
     # satisfaites) peut avoir ete explicitement gele par un operateur
@@ -286,16 +320,24 @@ for pass in $(seq 1 $MAX_PASSES); do
       progressed=1
     else
       echo "$(date -Iseconds),$JOB_ID,$JOB_NAME,ECHEC,$JOB_LOG,$JOB_DURATION_SEC" >> "$HISTORY_LEDGER"
-      log "$JOB_ID -> ECHEC. Voir $JOB_LOG (ou $RUN_LOG). Arret orchestrateur."
-      FAILED_JOB_ID="$JOB_ID"
-      FAILED_JOB_NAME="$JOB_NAME"
+      SVC_LABEL="${SERVICE:-(aucun)}"
+      log "$JOB_ID -> ECHEC (service '$SVC_LABEL'). Voir $JOB_LOG (ou $RUN_LOG). Ce service s'arrete, les autres services independants continuent."
+      if [ -n "${SERVICE:-}" ]; then
+        FAILED_SERVICES["$SERVICE"]=1
+      fi
+      FAILED_JOBS_LOG="${FAILED_JOBS_LOG}${JOB_ID} (${JOB_NAME}, service ${SVC_LABEL}) - voir ${JOB_LOG}\n"
       # Alerte email (notifier.sh, ajoute le 2026-08-12) - ne bloque et
       # ne casse JAMAIS l'orchestrateur, meme si l'envoi echoue ou si
       # NOTIF_ENABLED n'est pas configure.
       if [ -x "$SCRIPT_DIR/notifier.sh" ]; then
         "$SCRIPT_DIR/notifier.sh" "$JOB_ID" "$JOB_NAME" "ECHEC" "$JOB_LOG" >> "$RUN_LOG" 2>&1 || true
       fi
-      exit 1
+      # "progressed" reste a 0 ici (volontaire) : un job en ECHEC ne
+      # marque jamais son OUT_COND, donc ne debloque rien de nouveau -
+      # ce n'est pas une "progression" au sens du point fixe de la
+      # boucle de passes. Si TOUS les jobs restants d'une passe sont des
+      # echecs (ou des blocages permanents), la boucle "for pass" doit
+      # s'arreter normalement plutot que de rejouer 30 passes inutiles.
     fi
   done < "$JOBS_CSV"
   [ $progressed -eq 0 ] && break
@@ -304,3 +346,9 @@ done
 log "=== Fin orchestrateur ==="
 log "Etat final (jobs termines) :"
 ls "$STATE_DIR" 2>/dev/null | grep '\.ok$' | tee -a "$RUN_LOG"
+
+if [ ${#FAILED_SERVICES[@]} -gt 0 ]; then
+  log "=== ${#FAILED_SERVICES[@]} service(s) en echec : ${!FAILED_SERVICES[*]} (les autres services independants ont ete tentes jusqu'au bout) ==="
+  exit 1
+fi
+exit 0
