@@ -1,12 +1,12 @@
 #!/bin/bash
-# rejouer_job.sh - "Rerun" : relance une NOUVELLE instance d'un job deja
+# bin/rerun_job.sh - "Rerun" : relance une NOUVELLE instance d'un job deja
 # execute (efface sa condition de sortie puis le rejoue), ajoute le
 # 2026-09-01. Toujours respecte ses dependances reelles (contrairement a
-# forcer_job.sh) - reserve a "je veux une execution fraiche de ce meme
+# bin/order_job.sh) - reserve a "je veux une execution fraiche de ce meme
 # job", pas a un court-circuit de dependances.
 #
 # Usage :
-#   ./rejouer_job.sh <JOB_ID> "<raison>"
+#   ./bin/rerun_job.sh <JOB_ID> "<raison>"
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export VARS_FILE="${VARS_FILE:-$HERE/vars.conf}"
@@ -16,7 +16,7 @@ source "$HERE/lib/commun.sh"
 JOB_ID="${1:-}"
 RAISON="${2:-}"
 if [ -z "$JOB_ID" ] || [ -z "$RAISON" ]; then
-  echo "Usage : ./rejouer_job.sh <JOB_ID> \"<raison>\""
+  echo "Usage : ./bin/rerun_job.sh <JOB_ID> \"<raison>\""
   echo "La raison est obligatoire (audit - on ne rejoue jamais un job sans dire pourquoi)."
   exit 1
 fi
@@ -40,11 +40,11 @@ if [ -z "$LINE" ]; then
 fi
 
 if job_held "$JOB_ID"; then
-  echo "ERREUR : $JOB_ID est GELE (HELD). Liberez-le d'abord : ./liberer_job.sh $JOB_ID"
+  echo "ERREUR : $JOB_ID est GELE (HELD). Liberez-le d'abord : ./bin/free_job.sh $JOB_ID"
   exit 1
 fi
 if job_deleted "$JOB_ID"; then
-  echo "ERREUR : $JOB_ID est SUPPRIME (DELETE). Restaurez-le d'abord : ./restaurer_job.sh $JOB_ID"
+  echo "ERREUR : $JOB_ID est SUPPRIME (DELETE). Restaurez-le d'abord : ./bin/undelete_job.sh $JOB_ID"
   exit 1
 fi
 
@@ -57,7 +57,7 @@ if [ -n "$C_IN_COND" ] && [ "$C_IN_COND" != "NONE" ]; then
 fi
 if [ -n "$MISSING" ]; then
   echo "ERREUR : $JOB_ID ne peut pas etre rejoue - dependance(s) non satisfaite(s) : $MISSING"
-  echo "(\"Rerun\" respecte toujours les dependances reelles. Pour outrepasser : ./forcer_job.sh $JOB_ID \"<raison>\")"
+  echo "(\"Rerun\" respecte toujours les dependances reelles. Pour outrepasser : ./bin/order_job.sh $JOB_ID \"<raison>\")"
   exit 1
 fi
 

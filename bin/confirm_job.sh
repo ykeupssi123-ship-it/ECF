@@ -1,12 +1,12 @@
 #!/bin/bash
-# confirmer_job.sh - "Confirm" : approuve manuellement un job pose sous
-# exigence de confirmation (voir exiger_confirmation.sh), ajoute le
+# bin/confirm_job.sh - "Confirm" : approuve manuellement un job pose sous
+# exigence de confirmation (voir bin/require_confirm.sh), ajoute le
 # 2026-09-01. Leve l'exigence puis, si le job est deja pret (dependances
 # satisfaites), le lance immediatement - sinon il partira normalement des
 # que pret, via ./orchestrator.sh.
 #
 # Usage :
-#   ./confirmer_job.sh <JOB_ID> "<raison>"
+#   ./bin/confirm_job.sh <JOB_ID> "<raison>"
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export VARS_FILE="${VARS_FILE:-$HERE/vars.conf}"
@@ -16,7 +16,7 @@ source "$HERE/lib/commun.sh"
 JOB_ID="${1:-}"
 RAISON="${2:-}"
 if [ -z "$JOB_ID" ] || [ -z "$RAISON" ]; then
-  echo "Usage : ./confirmer_job.sh <JOB_ID> \"<raison>\""
+  echo "Usage : ./bin/confirm_job.sh <JOB_ID> \"<raison>\""
   echo "La raison est obligatoire (audit - on n'approuve jamais un job sans dire pourquoi)."
   exit 1
 fi
@@ -24,7 +24,7 @@ RAISON_SAFE="${RAISON//,/;}"
 
 if ! job_needs_confirm "$JOB_ID"; then
   echo "$JOB_ID n'exige aucune confirmation actuellement. Rien a faire."
-  echo "(Pour en poser une : ./exiger_confirmation.sh $JOB_ID \"<raison>\")"
+  echo "(Pour en poser une : ./bin/require_confirm.sh $JOB_ID \"<raison>\")"
   exit 0
 fi
 
@@ -59,7 +59,7 @@ fi
 
 if [ -n "$LINE" ] && [ -z "$MISSING" ] && ! job_done "${C_OUT_COND:-}"; then
   echo "Toutes ses dependances sont satisfaites - lancement immediat..."
-  exec "$HERE/executer_maintenant.sh" "$JOB_ID"
+  exec "$HERE/bin/run_now.sh" "$JOB_ID"
 fi
 
 echo "Il partira normalement au prochain ./orchestrator.sh des que ses dependances seront satisfaites."

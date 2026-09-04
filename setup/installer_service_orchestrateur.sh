@@ -1,6 +1,6 @@
 #!/bin/bash
 # installer_service_orchestrateur.sh - AJOUTE LE 2026-08-19 (incident reel
-# wef-elk-core, meme journee que le passage a WAZ_018_NET)
+# ecf, meme journee que le passage a WAZ_018_NET)
 #
 # PROBLEME REEL CONSTATE : ./orchestrator.sh lance directement dans une
 # session SSH interactive (PuTTY) est un ENFANT de cette session. Quand
@@ -26,15 +26,15 @@
 # meme facon un orchestrateur lance en direct dans un terminal).
 #
 # CORRECTIF : ce script installe orchestrator.sh comme un VRAI service
-# systemd (wef-orchestrateur.service, Type=oneshot). Un service systemd
+# systemd (ecf-orchestrateur.service, Type=oneshot). Un service systemd
 # n'est PAS un enfant de la session SSH qui l'a demarre - il est
 # supervise par PID 1 (systemd lui-meme), totalement independant de tout
 # terminal. Une coupure reseau, volontaire (WAZ_018_NET) ou accidentelle,
 # n'a plus AUCUN effet sur lui : il continue de tourner et de progresser
 # dans jobs_table.csv exactement comme avant, que quelqu'un soit
 # connecte pour le regarder ou non. On se reconnecte simplement ensuite
-# pour consulter son etat (systemctl status / journalctl / statut_live.sh
-# / historique_job.sh - tous continuent de fonctionner normalement).
+# pour consulter son etat (systemctl status / journalctl / bin/monitoring.sh
+# / bin/view_history.sh - tous continuent de fonctionner normalement).
 #
 # A LANCER UNE SEULE FOIS (racine, root) - idempotent, peut etre relance
 # sans risque si le chemin d'installation change (ex: migration future
@@ -42,10 +42,10 @@
 # d'exploitation).
 #
 # Usage apres installation :
-#   systemctl start wef-orchestrateur     # lance l'orchestrateur, detache de tout terminal
-#   systemctl status wef-orchestrateur    # etat du dernier lancement (actif/reussi/echoue)
-#   journalctl -u wef-orchestrateur -f    # suivre en direct (optionnel, purement pour observer)
-#   systemctl stop wef-orchestrateur      # n'arrete PAS le job en cours proprement (voir note ci-dessous)
+#   systemctl start ecf-orchestrateur     # lance l'orchestrateur, detache de tout terminal
+#   systemctl status ecf-orchestrateur    # etat du dernier lancement (actif/reussi/echoue)
+#   journalctl -u ecf-orchestrateur -f    # suivre en direct (optionnel, purement pour observer)
+#   systemctl stop ecf-orchestrateur      # n'arrete PAS le job en cours proprement (voir note ci-dessous)
 set -uo pipefail
 
 if [ "$(id -u)" -ne 0 ]; then
@@ -58,8 +58,8 @@ if ! command -v systemctl &>/dev/null; then
   exit 1
 fi
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-UNIT_PATH="/etc/systemd/system/wef-orchestrateur.service"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+UNIT_PATH="/etc/systemd/system/ecf-orchestrateur.service"
 
 echo "[installer_service_orchestrateur] Installation du service pour : ${SCRIPT_DIR}/orchestrator.sh"
 
@@ -70,7 +70,7 @@ fi
 
 cat > "$UNIT_PATH" << UNITEOF
 [Unit]
-Description=WAZ_ELK_FACTORY - Orchestrateur (ordonnanceur de jobs)
+Description=ERP_CRM_FACTORY - Orchestrateur (ordonnanceur de jobs)
 # Volontairement AUCUNE dependance reseau (After=network-online.target) :
 # l'orchestrateur doit pouvoir demarrer et progresser meme si le reseau
 # est instable ou volontairement coupe (crash-test WAZ_018_NET), c'est
@@ -87,7 +87,7 @@ User=root
 # en 1 sur echec de job) - visibilite immediate de l'issue reelle, sans
 # avoir besoin d'etre reste connecte pour la voir en direct.
 # Sortie standard/erreur du service capturee par journald automatiquement
-# (journalctl -u wef-orchestrateur) - en plus des logs deja ecrits par
+# (journalctl -u ecf-orchestrateur) - en plus des logs deja ecrits par
 # l'orchestrateur lui-meme dans logs/ et state/history/ (aucune perte,
 # simple redondance utile).
 
@@ -100,11 +100,11 @@ systemctl daemon-reload
 echo "[installer_service_orchestrateur] OK."
 echo ""
 echo "Pour lancer l'orchestrateur en service (detache de toute session SSH) :"
-echo "  systemctl start wef-orchestrateur"
+echo "  systemctl start ecf-orchestrateur"
 echo "Pour suivre en direct (facultatif, n'affecte pas l'execution) :"
-echo "  journalctl -u wef-orchestrateur -f"
+echo "  journalctl -u ecf-orchestrateur -f"
 echo "Pour verifier l'issue apres coup (meme apres une reconnexion) :"
-echo "  systemctl status wef-orchestrateur"
-echo "  ./statut_live.sh"
-echo "  ./historique_job.sh <JOB_ID>"
+echo "  systemctl status ecf-orchestrateur"
+echo "  ./bin/monitoring.sh"
+echo "  ./bin/view_history.sh <JOB_ID>"
 exit 0

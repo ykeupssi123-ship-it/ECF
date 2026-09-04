@@ -1,9 +1,9 @@
 #!/bin/bash
-# restaurer_job.sh - Leve la suppression (UNDELETE) d'un job, ajoute le
-# 2026-09-01. Voir supprimer_job.sh.
+# bin/undelete_job.sh - Leve la suppression (UNDELETE) d'un job, ajoute le
+# 2026-09-01. Voir bin/delete_job.sh.
 #
 # Usage :
-#   ./restaurer_job.sh <JOB_ID>
+#   ./bin/undelete_job.sh <JOB_ID>
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export VARS_FILE="${VARS_FILE:-$HERE/vars.conf}"
@@ -12,7 +12,7 @@ source "$HERE/lib/commun.sh"
 
 JOB_ID="${1:-}"
 if [ -z "$JOB_ID" ]; then
-  echo "Usage : ./restaurer_job.sh <JOB_ID>"
+  echo "Usage : ./bin/undelete_job.sh <JOB_ID>"
   exit 1
 fi
 

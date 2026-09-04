@@ -1,13 +1,13 @@
 #!/bin/bash
-# exiger_confirmation.sh - Pose une exigence d'approbation manuelle
+# bin/require_confirm.sh - Pose une exigence d'approbation manuelle
 # prealable (CONFIRM) sur un job, ajoute le 2026-09-01. Typiquement pose
 # a l'avance sur un job dont l'effet est irreversible ou sensible (ex :
 # envoi reel d'une facture par email a un client) - l'orchestrateur
-# sautera ce job, meme pret, jusqu'a ./confirmer_job.sh. Voir
-# lib/commun.sh (job_needs_confirm) et confirmer_job.sh.
+# sautera ce job, meme pret, jusqu'a ./bin/confirm_job.sh. Voir
+# lib/commun.sh (job_needs_confirm) et bin/confirm_job.sh.
 #
 # Usage :
-#   ./exiger_confirmation.sh <JOB_ID> "<raison>"
+#   ./bin/require_confirm.sh <JOB_ID> "<raison>"
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export VARS_FILE="${VARS_FILE:-$HERE/vars.conf}"
@@ -17,7 +17,7 @@ source "$HERE/lib/commun.sh"
 JOB_ID="${1:-}"
 RAISON="${2:-}"
 if [ -z "$JOB_ID" ] || [ -z "$RAISON" ]; then
-  echo "Usage : ./exiger_confirmation.sh <JOB_ID> \"<raison>\""
+  echo "Usage : ./bin/require_confirm.sh <JOB_ID> \"<raison>\""
   exit 1
 fi
 
@@ -37,4 +37,4 @@ RAISON_SAFE="${RAISON//,/;}"
 
 echo "$JOB_ID exige desormais une CONFIRMATION avant execution (pose par $OPERATEUR)."
 echo "Raison : $RAISON_SAFE"
-echo "L'orchestrateur sautera ce job tant qu'il n'est pas approuve. Pour l'approuver : ./confirmer_job.sh $JOB_ID \"<raison>\""
+echo "L'orchestrateur sautera ce job tant qu'il n'est pas approuve. Pour l'approuver : ./bin/confirm_job.sh $JOB_ID \"<raison>\""

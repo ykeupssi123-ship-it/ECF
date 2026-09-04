@@ -1,9 +1,9 @@
 #!/bin/bash
 # ECFBOSU - ECF_ODOO_BLD_OSUPDATE - Terrassement : mise a jour OS
 #
-# Meme lecon deja tiree sur WAZ_ELK_FACTORY (voir ES_001/geler_job.sh
+# Meme lecon deja tiree sur WAZ_ELK_FACTORY (voir ES_001/bin/hold_job.sh
 # apres coup) : ce job ne sert qu'au tout premier deploiement. Une fois
-# la machine stable, gelez-le (./geler_job.sh ODOO_001 "raison") pour
+# la machine stable, gelez-le (./bin/hold_job.sh ODOO_001 "raison") pour
 # eviter un dnf update declenche par accident sur une machine en service.
 set -uo pipefail
 source "$VARS_FILE"

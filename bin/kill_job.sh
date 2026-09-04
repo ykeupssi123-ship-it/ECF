@@ -1,11 +1,11 @@
 #!/bin/bash
-# tuer_job.sh - "Kill/Terminate" : envoie un signal d'arret reel a un job
+# bin/kill_job.sh - "Kill/Terminate" : envoie un signal d'arret reel a un job
 # EN COURS D'EXECUTION, ajoute le 2026-09-01. Equivalent fonctionnel du
 # Kill Control-M - SIGTERM d'abord (arret propre), escalade en SIGKILL si
 # le processus survit encore apres quelques secondes.
 #
 # Usage :
-#   ./tuer_job.sh <JOB_ID> "<raison>"
+#   ./bin/kill_job.sh <JOB_ID> "<raison>"
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export VARS_FILE="${VARS_FILE:-$HERE/vars.conf}"
@@ -15,7 +15,7 @@ source "$HERE/lib/commun.sh"
 JOB_ID="${1:-}"
 RAISON="${2:-}"
 if [ -z "$JOB_ID" ] || [ -z "$RAISON" ]; then
-  echo "Usage : ./tuer_job.sh <JOB_ID> \"<raison>\""
+  echo "Usage : ./bin/kill_job.sh <JOB_ID> \"<raison>\""
   echo "La raison est obligatoire (audit - on ne tue jamais un job sans dire pourquoi)."
   exit 1
 fi
@@ -71,4 +71,4 @@ fi
 
 echo "$JOB_ID (PID $PID) TUE par $OPERATEUR le $(date -Iseconds)."
 echo "$(date -Iseconds),$JOB_ID,$JOB_ID,TUE,-," >> "$HISTORY_LEDGER"
-echo "Marque TUE dans l'historique (jamais confondu avec un ECHEC naturel du script) : ./historique_job.sh $JOB_ID"
+echo "Marque TUE dans l'historique (jamais confondu avec un ECHEC naturel du script) : ./bin/view_history.sh $JOB_ID"

@@ -33,7 +33,7 @@ Les 20 jobs Tier 0 (installation du système) suivent déjà ce patron : `ECF_SY
 
 Le patron `ECF_<MODULE>_<TIER>_<FONCTION>` ci-dessus concerne **JOB_NAME**
 (colonne 2 — le "Memname" recherchable par joker). **JOB_ID** (colonne 1 —
-l'identifiant technique unique, celui qu'on tape dans `forcer_job.sh
+l'identifiant technique unique, celui qu'on tape dans `bin/order_job.sh
 <JOB_ID>`) suit une règle séparée.
 
 **Historique du schéma (deux corrections successives le 4 septembre

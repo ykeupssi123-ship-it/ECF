@@ -29,23 +29,27 @@ réels du catalogue (Tier 1, voir `docs/CONVENTION_NOMMAGE.md`).
 
 ## Opérations d'exploitation (façon Control-M)
 
-| Action Control-M | Commande de ce projet |
+Racine minimale — `orchestrator.sh` reste le seul point d'entrée à la
+racine. Toutes les actions d'exploitation vivent dans `bin/`, sous le
+vrai nom de l'action Control-M correspondante (jamais une paraphrase
+française) :
+
+| Action Control-M | Commande |
 |---|---|
-| Rerun | `./rejouer_job.sh <JOB_ID> "<raison>"` |
-| Force Run | `./forcer_job.sh <JOB_ID> "<raison>"` |
-| Bypass / Set to OK | `./marquer_deja_fait.sh <JOB_ID> "<raison>"` |
-| Run Now | `./executer_maintenant.sh <JOB_ID>` |
-| Hold | `./geler_job.sh <JOB_ID> "<raison>"` |
-| Release | `./liberer_job.sh <JOB_ID>` |
-| Kill / Terminate | `./tuer_job.sh <JOB_ID> "<raison>"` |
-| Confirm (pose) | `./exiger_confirmation.sh <JOB_ID> "<raison>"` |
-| Confirm (approuve) | `./confirmer_job.sh <JOB_ID> "<raison>"` |
-| Delete | `./supprimer_job.sh <JOB_ID> "<raison>"` |
-| Undelete | `./restaurer_job.sh <JOB_ID>` |
-| View Output / Sysout | `./historique_job.sh <JOB_ID> <numero>` |
-| View Log / View History | `./historique_job.sh <JOB_ID>` |
-| Statut en direct | `./statut_live.sh` |
-| Tableau de bord web | `python3 tableau_de_bord.py` |
+| Order / Force | `./bin/order_job.sh <JOB_ID> "<raison>"` |
+| Hold | `./bin/hold_job.sh <JOB_ID> "<raison>"` |
+| Free / Release | `./bin/free_job.sh <JOB_ID>` |
+| Rerun | `./bin/rerun_job.sh <JOB_ID> "<raison>"` |
+| Set to OK | `./bin/set_to_ok.sh <JOB_ID> "<raison>"` |
+| Confirm (pose) | `./bin/require_confirm.sh <JOB_ID> "<raison>"` |
+| Confirm (approuve) | `./bin/confirm_job.sh <JOB_ID> "<raison>"` |
+| Kill / Force End | `./bin/kill_job.sh <JOB_ID> "<raison>"` |
+| Delete | `./bin/delete_job.sh <JOB_ID> "<raison>"` |
+| Undelete | `./bin/undelete_job.sh <JOB_ID>` |
+| Run Now | `./bin/run_now.sh <JOB_ID>` |
+| View History | `./bin/view_history.sh <JOB_ID>` |
+| Monitoring | `./bin/monitoring.sh` |
+| Tableau de bord web | `python3 bin/tableau_de_bord.py` |
 
 Chaque action exige une raison et retape le JOB_ID en confirmation
 (discipline d'audit bancaire, aucune dérogation manuelle silencieuse).

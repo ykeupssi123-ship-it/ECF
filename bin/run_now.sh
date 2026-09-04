@@ -1,15 +1,15 @@
 #!/bin/bash
-# executer_maintenant.sh - "Run Now" : lance IMMEDIATEMENT un job pret
+# bin/run_now.sh - "Run Now" : lance IMMEDIATEMENT un job pret
 # (dependances deja satisfaites), sans attendre le prochain balayage
 # sequentiel de ./orchestrator.sh. Ajoute le 2026-09-01.
 #
-# Distinct de forcer_job.sh (Force Run) : celui-la outrepasse des
+# Distinct de bin/order_job.sh (Force Run) : celui-la outrepasse des
 # dependances MANQUANTES ; celui-ci REFUSE si une dependance manque -
 # c'est juste une execution immediate d'un job deja legitimement pret,
 # pas un court-circuit de securite.
 #
 # Usage :
-#   ./executer_maintenant.sh <JOB_ID>
+#   ./bin/run_now.sh <JOB_ID>
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export VARS_FILE="${VARS_FILE:-$HERE/vars.conf}"
@@ -18,7 +18,7 @@ source "$HERE/lib/commun.sh"
 
 JOB_ID="${1:-}"
 if [ -z "$JOB_ID" ]; then
-  echo "Usage : ./executer_maintenant.sh <JOB_ID>"
+  echo "Usage : ./bin/run_now.sh <JOB_ID>"
   exit 1
 fi
 
@@ -40,20 +40,20 @@ if [ -z "$LINE" ]; then
 fi
 
 if job_held "$JOB_ID"; then
-  echo "ERREUR : $JOB_ID est GELE (HELD). Liberez-le d'abord : ./liberer_job.sh $JOB_ID"
+  echo "ERREUR : $JOB_ID est GELE (HELD). Liberez-le d'abord : ./bin/free_job.sh $JOB_ID"
   exit 1
 fi
 if job_deleted "$JOB_ID"; then
-  echo "ERREUR : $JOB_ID est SUPPRIME (DELETE). Restaurez-le d'abord : ./restaurer_job.sh $JOB_ID"
+  echo "ERREUR : $JOB_ID est SUPPRIME (DELETE). Restaurez-le d'abord : ./bin/undelete_job.sh $JOB_ID"
   exit 1
 fi
 if job_needs_confirm "$JOB_ID"; then
-  echo "ERREUR : $JOB_ID exige une confirmation prealable. Approuvez-le d'abord : ./confirmer_job.sh $JOB_ID \"<raison>\""
+  echo "ERREUR : $JOB_ID exige une confirmation prealable. Approuvez-le d'abord : ./bin/confirm_job.sh $JOB_ID \"<raison>\""
   exit 1
 fi
 if job_done "$C_OUT_COND"; then
   echo "$JOB_ID a deja ete execute avec succes (condition $C_OUT_COND deja remplie)."
-  echo "Pour le rejouer quand meme : ./rejouer_job.sh $JOB_ID \"<raison>\""
+  echo "Pour le rejouer quand meme : ./bin/rerun_job.sh $JOB_ID \"<raison>\""
   exit 0
 fi
 
@@ -66,7 +66,7 @@ if [ -n "$C_IN_COND" ] && [ "$C_IN_COND" != "NONE" ]; then
 fi
 if [ -n "$MISSING" ]; then
   echo "ERREUR : $JOB_ID n'est pas encore pret - dependance(s) manquante(s) : $MISSING"
-  echo "(\"Run Now\" ne s'applique qu'a un job deja legitimement pret. Pour outrepasser : ./forcer_job.sh $JOB_ID \"<raison>\")"
+  echo "(\"Run Now\" ne s'applique qu'a un job deja legitimement pret. Pour outrepasser : ./bin/order_job.sh $JOB_ID \"<raison>\")"
   exit 1
 fi
 

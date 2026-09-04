@@ -5,6 +5,20 @@ Aucune décision "parce que ça semble logique" — chaque ligne ci-dessous
 s'appuie sur une commande réellement exécutée sur la VM 192.168.50.130,
 jamais une supposition.*
 
+> **Noms d'outils historiques (avant le 4 septembre 2026)** : les entrées
+> ci-dessous mentionnent `forcer_job.sh`, `geler_job.sh`, `liberer_job.sh`,
+> `rejouer_job.sh`, `marquer_deja_fait.sh`, `historique_job.sh`,
+> `statut_live.sh`, `confirmer_job.sh`, `exiger_confirmation.sh`,
+> `executer_maintenant.sh`, `tuer_job.sh`, `supprimer_job.sh`,
+> `restaurer_job.sh` à la racine - exact au moment de chaque incident
+> décrit, jamais corrigé après coup pour rester un compte-rendu fidèle.
+> Depuis cette date, ces outils vivent dans `bin/` sous leur vrai nom
+> Control-M (`bin/order_job.sh`, `bin/hold_job.sh`, `bin/free_job.sh`,
+> `bin/rerun_job.sh`, `bin/set_to_ok.sh`, `bin/view_history.sh`,
+> `bin/monitoring.sh`, `bin/confirm_job.sh`, `bin/require_confirm.sh`,
+> `bin/run_now.sh`, `bin/kill_job.sh`, `bin/delete_job.sh`,
+> `bin/undelete_job.sh`) - voir `README.md` pour la table complète.
+
 ---
 
 ## 2026-09-01 — Nuit : reprise autonome du Tier 0 (incident ODOO_003 + audit ODOO_001)
