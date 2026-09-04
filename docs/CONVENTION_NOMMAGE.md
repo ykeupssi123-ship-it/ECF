@@ -215,6 +215,52 @@ exclut ces groupes de la construction de `$ECFOP` via le filtre
 `$9!~/^ILL/` (les sociétés d'illustration ne sont pas des modules
 d'échange de fichiers réels).
 
+## Cycles calendaires (Phase B, démarrée le 4 septembre 2026)
+
+Les jobs Tier 1 vus jusqu'ici (`OUT_COND=NONE`) sont **déclenchés par
+fichier** — ils tournent à chaque lancement de l'orchestrateur, sans
+notion de calendrier. Un vrai traitement EOD/EOM (Control-M : jobs
+`CYC`, séquence linéaire A→B→C se terminant seule, redémarrée par une
+« montée au plan » quotidienne) a besoin d'autre chose :
+
+- **`bin/montee_au_plan.sh`** (équivalent New Day/Active Plan
+  Control-M) — pour chaque cycle enregistré dans son registre
+  `CYCLE_WINDOWS` (ex. `EOD_VENTES_WINDOW_OPEN`), ouvre une fois par
+  jour (ou par mois, `MONTHLY`) une condition `*_WINDOW_OPEN`, après
+  avoir **archivé** (jamais supprimé silencieusement,
+  `state/plan/history/`) le jalon terminal du cycle précédent.
+  Idempotent — relancé plusieurs fois le même jour, ne fait rien après
+  la première fois. Écrit un instantané daté, `state/plan/<date>.csv`
+  — LE plan du jour, consultable.
+- Les jobs de la chaîne utilisent des **`OUT_COND` réels** (pas
+  `NONE`) — un vrai jalon persistant, remis à zéro uniquement par
+  `montee_au_plan.sh` au cycle suivant, jamais par le job lui-même.
+- **Aucun changement de schéma `jobs_table.csv`** : le calendrier vit
+  entièrement dans `bin/montee_au_plan.sh` (`CYCLE_WINDOWS`), pas dans
+  une colonne — 10 points d'analyse positionnelle (`orchestrator.sh` et
+  7 scripts `bin/`) auraient dû être mis à jour pour une colonne
+  `CYCLE`, juste après la correction d'un bug critique sur ces mêmes
+  fichiers (voir plus bas) — risque jugé disproportionné pour le
+  bénéfice, contre une solution additive équivalente.
+- **Deux minuteurs systemd distincts, jamais fusionnés** (voir
+  `setup/installer_service_montee_au_plan.sh` et
+  `setup/installer_service_orchestrateur_periodique.sh`) : l'un ouvre
+  les fenêtres (00:05, quotidien), l'autre relance `orchestrator.sh`
+  toutes les 15 minutes pour que les jobs devenus éligibles s'exécutent
+  réellement — une fenêtre ouverte sans relance périodique ne ferait
+  jamais tourner sa chaîne.
+
+### Exemple réel construit : cycle EOD Ventes
+
+`ECFCVTRL` (détecte les devis en attente > 5 jours, rapport dans
+`$ECFOP/vt/snd`) → `ECFCVTNT` (annule les devis périmés > 30 jours) →
+`ECFCVTRP` (rapport de fin de journée : commandes et CA du jour,
+`OUT_COND=EOD_VENTES_TERMINE` — le job qui marque la fin du
+traitement). Vérifié par un harnais de simulation isolé (jamais
+commité) : ouverture, idempotence le même jour, archivage et
+réouverture correcte au jour suivant (simulé en antidatant le marqueur
+d'ouverture, jamais en trafiquant l'horloge système).
+
 ## Tier 1 — jobs métier réels (éclatement atomique, démarré le 4 septembre 2026)
 
 Chaque module suit le même patron, par exemple pour le CRM :

@@ -37,6 +37,9 @@ ECFBVTDE,ECF_VENTE_BLD_DEACTIVATE,ODOO_HOST,ALWAYS,ECFBVTDE.sh,Desactivation mod
 ECFRVTDV,ECF_VENTE_RUN_CREATEDEVIS,ODOO_HOST,ALWAYS,ECFRVTDV.sh,Cree un devis (une ou plusieurs lignes) depuis un CSV depose dans operations/vt/rcv (job repetable Tier 1),VENTE_ACTIVE,NONE,VT
 ECFRVTCF,ECF_VENTE_RUN_CONFIRMORDER,ODOO_HOST,ALWAYS,ECFRVTCF.sh,Confirme un devis existant en commande depuis un CSV depose dans operations/vt/rcv (job repetable Tier 1),VENTE_ACTIVE,NONE,VT
 ECFRVTIN,ECF_VENTE_RUN_CREATEINVOICE,ODOO_HOST,ALWAYS,ECFRVTIN.sh,Cree et valide la facture d une commande confirmee depuis un CSV depose dans operations/vt/rcv (job repetable Tier 1),VENTE_ACTIVE,NONE,VT
+ECFCVTRL,ECF_VENTE_CYC_RELANCE,ODOO_HOST,ALWAYS,ECFCVTRL.sh,Detecte les devis en attente depuis plus de 5 jours - 1er job du cycle EOD Ventes,EOD_VENTES_WINDOW_OPEN,EOD_VENTES_RELANCE_OK,VT
+ECFCVTNT,ECF_VENTE_CYC_NETTOYAGE,ODOO_HOST,ALWAYS,ECFCVTNT.sh,Annule les devis perimes depuis plus de 30 jours - 2e job du cycle EOD Ventes,EOD_VENTES_RELANCE_OK,EOD_VENTES_NETTOYAGE_OK,VT
+ECFCVTRP,ECF_VENTE_CYC_RAPPORT,ODOO_HOST,ALWAYS,ECFCVTRP.sh,Rapport de fin de journee (commandes et CA du jour) - dernier job du cycle EOD Ventes,EOD_VENTES_NETTOYAGE_OK,EOD_VENTES_TERMINE,VT
 ECFBCPAC,ECF_COMPTA_BLD_ACTIVATE,ODOO_HOST,ALWAYS,ECFBCPAC.sh,Activation module account : Facturation et comptabilite de base,ODOO_SYSTEME_PRET,COMPTA_ACTIVE,CP
 ECFBCPDE,ECF_COMPTA_BLD_DEACTIVATE,ODOO_HOST,ALWAYS,ECFBCPDE.sh,Desactivation module account : Facturation et comptabilite de base,COMPTA_ACTIVE,COMPTA_INACTIVE,CP
 ECFBAHAC,ECF_ACHAT_BLD_ACTIVATE,ODOO_HOST,ALWAYS,ECFBAHAC.sh,Activation module purchase : Commandes et appels d offres fournisseurs,ODOO_SYSTEME_PRET,ACHAT_ACTIVE,AH

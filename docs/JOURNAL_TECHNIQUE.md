@@ -929,3 +929,45 @@ puis reproduction exacte du scénario cassé (`hold_job.sh` sans
 `VARS_FILE` préexporté) - fonctionne, geler/libérer confirmés,
 `monitoring.sh` liste correctement l'état réel. Aucun résidu (état
 sous `state/`, ignoré par Git).
+
+---
+
+## 2026-09-04 (suite) — Phase B : cycles calendaires réels (montée au plan)
+
+Demande explicite utilisateur (capture Control-M réelle) : un module
+activé reste actif en tâche de fond, respectant son propre calendrier
+(EOD/EOM/TFJ), déclenché par un job "trigger" qui enchaîne
+linéairement les jobs de son traitement jusqu'à un job qui marque la
+fin - remis à zéro le cycle suivant. Absent jusqu'ici (jobs Tier 1
+`OUT_COND=NONE` = déclenchés par fichier, jamais par calendrier).
+
+**Construit** : `bin/montee_au_plan.sh` (New Day/Active Plan
+Control-M), `setup/installer_service_montee_au_plan.sh` (minuteur
+quotidien 00:05, même mécanisme que `wef-health-guardian.timer`),
+`setup/installer_service_orchestrateur_periodique.sh` (relance
+`orchestrator.sh` toutes les 15 min - sans lui, une fenêtre ouverte ne
+ferait jamais tourner sa chaîne). Décision de conception : le
+calendrier vit dans `bin/montee_au_plan.sh` (`CYCLE_WINDOWS`), jamais
+dans une colonne `jobs_table.csv` - 10 points d'analyse positionnelle
+auraient dû être mis à jour (`orchestrator.sh` ×2 et 7 scripts `bin/`),
+juste après le bug critique ci-dessus sur ces mêmes fichiers - risque
+jugé disproportionné pour le bénéfice. Voir
+`docs/CONVENTION_NOMMAGE.md`, section "Cycles calendaires".
+
+**Exemple réel construit** (pas un exemple abstrait) : cycle EOD
+Ventes, `ECFCVTRL` (détecte les devis en attente > 5 jours) →
+`ECFCVTNT` (annule les devis périmés > 30 jours) → `ECFCVTRP` (rapport
+de fin de journée, job qui marque la fin du traitement,
+`OUT_COND=EOD_VENTES_TERMINE`).
+
+**Vérifié en réel** (sandbox isolé, jamais commité, technique
+d'antidatage plutôt que de trafiquer l'horloge système) : (1) première
+ouverture de fenêtre - archive le jalon terminal du cycle précédent
+dans `state/plan/history/`, l'efface de `state/`, marque la fenêtre
+ouverte ; (2) relance le même jour - confirmé idempotent, aucun
+second archivage ; (3) simulation du jour suivant (marqueur
+d'ouverture antidaté) - confirmé : nouvel archivage, nouvelle
+ouverture. Ce qui reste à confirmer sur une vraie VM : le comportement
+réel des minuteurs systemd sur la durée (jamais testé au-delà d'une
+exécution manuelle du script), et le contenu métier réel des rapports
+Odoo (`ECFCVTRL`/`ECFCVTRP`) contre une vraie base.

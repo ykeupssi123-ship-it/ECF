@@ -91,17 +91,29 @@ $ECFOP (/opt/odoo/operations)   zone d'echange par module : rcv/snd/tmp/arc
 | Isolation de panne (un service en échec n'arrête pas les autres) | ✅ `FAILED_SERVICES` (fichiers, `state/run_tmp/`) |
 | Exécution parallèle par vague | ✅ depuis le 4 septembre 2026 (`run_job_async`, `MAX_PARALLEL_JOBS`) |
 | SYSOUT / historique par exécution | ✅ `state/history/<JOB_ID>/`, `bin/view_history.sh` |
-| Calendrier (jobs EOD/EOM/TFJ auto-déclenchés) | ❌ absent — Phase B, pas commencée |
-| Montée au plan / New Day (snapshot quotidien) | ❌ absent — Phase B, pas commencée |
-| Statistiques d'exécution roulées par jour | ❌ absent — Phase B, pas commencée |
+| Calendrier (jobs EOD/EOM/TFJ auto-déclenchés) | ✅ `bin/montee_au_plan.sh` (`CYCLE_WINDOWS`) + minuteurs systemd — 1 cycle réel construit (Ventes EOD), 30+ modules restants sur le même patron |
+| Montée au plan / New Day (snapshot quotidien) | ✅ `bin/montee_au_plan.sh`, `state/plan/<date>.csv` — vérifié en sandbox (ouverture, idempotence, archivage, réouverture au jour suivant), jamais sur une vraie VM avec minuteur réel |
+| Statistiques d'exécution roulées par jour | ❌ absent — les données brutes existent (`state/JOBS_HISTORY.csv`), rien ne les agrège encore par jour |
 | Couleurs d'état en temps réel dans un terminal | ❌ absent — `bin/monitoring.sh` reste textuel |
 | Hiérarchie Folder/Application/Sub-Application à 3 niveaux | ❌ absent — un seul niveau (`SERVICE`) |
 
 ## Avancement Tier 1 métier (31/34 modules restants)
 
-Terminés : **CRM** (5 jobs), **Ventes** (3 jobs), **Achat** (3 jobs).
-Patron reproductible (voir `docs/CONVENTION_NOMMAGE.md`, section Tier 1) :
-un job générique par opération métier réelle, jamais un job par
-scénario de test — la matrice MBTI (`docs/MATRICE_MBTI_ODOO.xlsx`, 480
-scénarios) est le plan de test de ces jobs, jamais traduite 1:1 en
-jobs.
+Terminés : **CRM** (5 jobs), **Ventes** (3 jobs + 1 cycle EOD de 3 jobs),
+**Achat** (3 jobs). Patron reproductible (voir
+`docs/CONVENTION_NOMMAGE.md`, section Tier 1) : un job générique par
+opération métier réelle, jamais un job par scénario de test — la
+matrice MBTI (`docs/MATRICE_MBTI_ODOO.xlsx`, 480 scénarios) est le plan
+de test de ces jobs, jamais traduite 1:1 en jobs.
+
+## Cycles calendaires (Phase B)
+
+Un module actif ne s'arrête jamais tout seul — il continue de tourner
+en tâche de fond selon son propre calendrier (voir
+`docs/CONVENTION_NOMMAGE.md`, section "Cycles calendaires"). Un seul
+cycle réel construit à ce jour : **Ventes — clôture EOD**
+(`ECFCVTRL`→`ECFCVTNT`→`ECFCVTRP`, quotidien). Le mécanisme
+(`bin/montee_au_plan.sh` + 2 minuteurs systemd) est générique — ajouter
+un cycle à un autre module ne demande qu'une ligne dans
+`CYCLE_WINDOWS` et sa propre chaîne de jobs, jamais un changement du
+moteur lui-même.
