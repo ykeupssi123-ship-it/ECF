@@ -80,17 +80,36 @@ disponible en un coup d'oeil via `JOB_NAME` (colonne 2) et `DESC`
 (colonne 6) sur la même ligne - jamais besoin de deviner ce qu'un ID
 court signifie, `jobs_table.csv` reste la référence unique.
 
-## Raccourcis d'exploitation CLI (`env_exploitation.sh`, ajouté le 4 septembre 2026)
+## Raccourcis d'exploitation CLI (`bin/env_exploitation.sh`, ajouté le 4 septembre 2026, corrigé le même jour)
 
 Inspiré d'une pratique réelle (Control-M, SGABS/Société Générale) : au
 lieu de mémoriser des chemins complets, l'opérateur utilise des
-variables courtes sourcées dans sa session CLI Linux (ex. `$ECFSEC` au
-lieu de `/opt/odoo/erp_crm_factory/secrets`). Facultatif, jamais un job
-de `jobs_table.csv` (une convention de nommage n'exécute rien) — voir
-`env_exploitation.sh` à la racine du projet, à sourcer manuellement
-(`source env_exploitation.sh`) ou via `~/.bash_profile` pour qu'il soit
-actif à chaque connexion. Chaque raccourci reflète une variable déjà
-définie dans `vars.conf` (source unique de vérité, jamais dupliquée).
+variables courtes sourcées dans sa session CLI Linux (ex. `$SEC` au
+lieu de `/opt/odoo/erp_crm_factory/secrets`). **Corrigé une fois** :
+la première version préfixait chaque variable par `ECF` (`$ECFSEC`,
+`$ECFHOME`...) - répétition inutile du nom du projet, alors que chez
+SGABS le préfixe codait le **sous-système** (`SM2`, `ADI`, `K11`),
+jamais l'entreprise elle-même. Schéma définitif, racine courte et
+générique (`$OP`, `$SEC`, `$ETA`, `$LOG`, `$HIST`, `$TMP`, `$BAK`,
+`$ODOOHOME`) - `$ECFOP` reste tel quel (déjà juste : chaque
+sous-dossier porte le vrai code sous-système via `SERVICE`, ex.
+`$ECFOP/cr/rcv`). Facultatif, jamais un job de `jobs_table.csv` (une
+convention de nommage n'exécute rien) — voir `bin/env_exploitation.sh`,
+à sourcer manuellement (`source bin/env_exploitation.sh`) ou via
+`~/.bash_profile`. Chaque raccourci reflète une variable déjà définie
+dans `vars.conf` (source unique de vérité, jamais dupliquée).
+
+## Matrice MBTI des opérations Odoo (`docs/MATRICE_MBTI_ODOO.xlsx`, ajoutée le 4 septembre 2026)
+
+480 scénarios de test (30 par type MBTI × 16 types), organisés en 8
+catégories inspirées d'une architecture bancaire de référence fournie
+par l'utilisateur (Interface, Catalogue, Tiers, Transaction, Workflow,
+Rapports, Inter-modules, Cas limites). Chaque scénario combine 4 axes
+réels : S/N (procédure littérale vs exploration de cas limites), T/F
+(cohérence logique vs impact humain), E/I (collaboratif vs solo), J/P
+(jusqu'à clôture vs interruption/reprise). Voir la feuille "Legende" du
+classeur pour le détail complet. Contenu ancré dans les opérations
+réelles d'Odoo 19 Community, jamais inventé hors contexte.
 
 ## Colonne SERVICE (9ᵉ colonne, ajoutée le 4 septembre 2026)
 
