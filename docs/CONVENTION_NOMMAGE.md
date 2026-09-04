@@ -99,6 +99,30 @@ convention de nommage n'exécute rien) — voir `bin/env_exploitation.sh`,
 `~/.bash_profile`. Chaque raccourci reflète une variable déjà définie
 dans `vars.conf` (source unique de vérité, jamais dupliquée).
 
+### Anticipation : nommer le destinataire réel (motif SGABS `SND_BNK`)
+
+`SND_BNK` chez SGABS ne voulait pas dire "envoi" tout court - ça voulait
+dire "envoi **destiné à l'entité BNK**". `$ECFOP/<module>/snd` est
+aujourd'hui générique. Schéma anticipé, jamais construit avant qu'un
+vrai destinataire existe (phase filiale) :
+
+```
+$ECFOP/<module>/rcv                 # aujourd'hui : reception generique
+$ECFOP/<module>/rcv_<source>        # demain : reception nommee (ex. rcv_portail)
+$ECFOP/<module>/snd                 # aujourd'hui : envoi generique
+$ECFOP/<module>/snd_<destinataire>  # demain : envoi nomme (ex. snd_dgi, snd_client)
+```
+
+**Lien direct avec les futurs jobs (pas qu'une convention passive)** :
+ces dossiers n'existent QUE pour être lus/écrits par de vrais jobs -
+en croisant `docs/MATRICE_MBTI_ODOO.xlsx`, catégorie
+"Interface/Intégration", les candidats déjà identifiés pour devenir de
+vrais jobs `ECFB<module><FONCTION>` lors de l'éclatement atomique sont :
+import clients CSV (Ventes, `$ECFOP/vt/rcv`), export grand livre PDF
+(Comptabilité, `$ECFOP/cp/snd`), import employés (RH, `$ECFOP/rh/rcv`).
+Chaque nouveau job d'import/export doit lire/écrire dans son
+`$ECFOP/<module>/` dédié - jamais un chemin en dur ailleurs.
+
 ## Matrice MBTI des opérations Odoo (`docs/MATRICE_MBTI_ODOO.xlsx`, ajoutée le 4 septembre 2026)
 
 480 scénarios de test (30 par type MBTI × 16 types), organisés en 8
