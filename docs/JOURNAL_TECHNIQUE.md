@@ -787,3 +787,20 @@ tôt dans la journée).
   omettait déjà `DURATION_SEC` (écrit depuis le 2026-08-12 sans jamais
   figurer dans l'en-tête) dans les 6 scripts qui l'écrivent. Voir
   `docs/CONVENTION_NOMMAGE.md`.
+- **Démarrage du Tier 1 (jobs métier réels) et bug réel trouvé en le
+  construisant** : premier job, `ECFRCRCL`
+  (`ECF_CRM_RUN_CREATELEAD`), lit un CSV réel déposé dans
+  `operations/cr/rcv`, crée des pistes CRM réelles, archive le fichier
+  traité. Contrairement aux jobs `BLD`, un job métier n'a pas de jalon
+  permanent — `OUT_COND=NONE`. En l'écrivant, découvert que
+  `job_done()`/`mark_done()` (`lib/commun.sh`) ne traitaient PAS "NONE"
+  en `OUT_COND` comme "pas de jalon" (déjà le cas côté `IN_COND`) : un
+  vrai fichier `state/NONE.ok`, partagé par tout job `OUT_COND=NONE`,
+  aurait gelé pour toujours tous les jobs répétables dès le premier
+  succès de l'un d'eux. Bug latent jamais déclenché avant (aucun job
+  répétable n'existait). Corrigé dans `lib/commun.sh`, plus un
+  garde-fou dans `orchestrator.sh` (`RAN_THIS_RUN`) pour qu'un job
+  `NONE` ne tourne qu'une fois par lancement de l'orchestrateur, jamais
+  une fois par passe de la boucle multi-passes (jusqu'à 30x sinon).
+  Vérifié par un test unitaire isolé des deux fonctions avant d'écrire
+  le job. Voir `docs/CONVENTION_NOMMAGE.md`, section Tier 1.

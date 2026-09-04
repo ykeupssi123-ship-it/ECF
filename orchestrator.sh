@@ -119,6 +119,17 @@ mkdir -p "$STATE_DIR/HELD"
 declare -A FAILED_SERVICES=()
 FAILED_JOBS_LOG=""
 
+# RAN_THIS_RUN (ajoute le 2026-09-04, avec le support OUT_COND=NONE dans
+# lib/commun.sh) : un job OUT_COND=NONE ne pose jamais de jalon permanent
+# (job_done() renvoie toujours faux pour lui) - sans ce garde-fou, il
+# serait retente a CHAQUE passe de la boucle multi-passes ci-dessous
+# (jusqu'a 30x dans la MEME execution de l'orchestrateur), au lieu d'une
+# fois par lancement comme un vrai job EOD/EOM/TFJ Control-M. Ne
+# s'applique qu'aux jobs OUT_COND=NONE - les jobs BLD/Tier 0 classiques
+# restent geres par leur jalon .ok habituel, jamais concerne par cette
+# table.
+declare -A RAN_THIS_RUN=()
+
 # Ecrit le rapport final, quelle que soit l'issue (succes, echec, Ctrl+C).
 write_report() {
   {
@@ -156,6 +167,15 @@ write_report() {
       [[ "$JOB_ROLE" != "$ROLE" && "$JOB_ROLE" != "ALL" ]] && continue
       if [ "$ROLE" = "AGENT_HOST" ]; then
         component_enabled "$COMPONENT" || continue
+      fi
+      # OUT_COND=NONE (jobs repetables, ajoute le 2026-09-04) : "jamais
+      # atteint" n'a pas de sens pour un job sans jalon permanent - ne
+      # figure ici que s'il n'a pas tourne DANS CETTE execution.
+      if [ "$OUT_COND" = "NONE" ]; then
+        [ -n "${RAN_THIS_RUN[$JOB_ID]:-}" ] && continue
+        echo "$JOB_ID ($JOB_NAME)"
+        NOT_REACHED=1
+        continue
       fi
       job_done "$OUT_COND" && continue
       echo "$JOB_ID ($JOB_NAME)"
@@ -195,6 +215,9 @@ for pass in $(seq 1 $MAX_PASSES); do
       component_enabled "$COMPONENT" || continue
     fi
     job_done "$OUT_COND" && continue
+    if [ "$OUT_COND" = "NONE" ] && [ -n "${RAN_THIS_RUN[$JOB_ID]:-}" ]; then
+      continue
+    fi
 
     ready=1
     if [ -n "$IN_COND" ] && [ "$IN_COND" != "NONE" ]; then
@@ -313,6 +336,7 @@ for pass in $(seq 1 $MAX_PASSES); do
     # Jamais un probleme cote donnees (jobs_table.csv lui-meme verifie
     # intact sur le disque) - uniquement un partage de descripteur non
     # isole entre le job et la boucle qui le pilote.
+    [ "$OUT_COND" = "NONE" ] && RAN_THIS_RUN["$JOB_ID"]=1
     JOB_START_EPOCH=$(date +%s)
     bash "$SCRIPT_PATH" > "$JOB_LOG" 2>&1 < /dev/null &
     JOB_PID=$!

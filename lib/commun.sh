@@ -11,8 +11,22 @@
 # AGENT_COMPONENTS).
 set -uo pipefail
 
-job_done(){ [ -f "${STATE_DIR}/$1.ok" ]; }
-mark_done(){ date -Iseconds > "${STATE_DIR}/$1.ok"; }
+# "NONE" special-case ajoute le 2026-09-04 : cote IN_COND, "NONE" est deja
+# traite comme "pas de dependance" (orchestrator.sh saute la boucle de
+# verification si IN_COND="NONE"). Cote OUT_COND, RIEN ne le traitait de
+# facon symetrique - un job avec OUT_COND=NONE ecrivait/lisait un vrai
+# fichier state/NONE.ok, PARTAGE par tout job utilisant "NONE" en
+# OUT_COND : le premier a s'executer avec succes geleait tous les
+# suivants pour toujours (job_done("NONE") devenait vrai a jamais). Bug
+# latent, jamais declenche tant qu'aucun job repetable (metier, pas
+# construction) n'existait. "NONE" en OUT_COND signifie desormais "ce
+# job ne pose jamais de jalon permanent" : job_done() renvoie
+# systematiquement faux, mark_done() est un no-op - le job reste
+# eligible a chaque execution de l'orchestrateur (utilise par les
+# futurs jobs metier Tier 1, type EOD/EOM/TFJ, jamais par les jobs de
+# construction Tier 0/BLD qui doivent rester "une fois pour toutes").
+job_done(){ [ "$1" = "NONE" ] && return 1; [ -f "${STATE_DIR}/$1.ok" ]; }
+mark_done(){ [ "$1" = "NONE" ] && return 0; date -Iseconds > "${STATE_DIR}/$1.ok"; }
 
 # Vrai si le champ COMPONENT d'une ligne jobs_table.csv (ex: "FILEBEAT"
 # ou "FILEBEAT|METRICBEAT" pour "l'un ou l'autre suffit") autorise

@@ -215,7 +215,7 @@ exclut ces groupes de la construction de `$ECFOP` via le filtre
 `$9!~/^ILL/` (les sociétés d'illustration ne sont pas des modules
 d'échange de fichiers réels).
 
-## Application à venir (Tier 1 — modules, Tier 2 — démonstration)
+## Tier 1 — jobs métier réels (éclatement atomique, démarré le 4 septembre 2026)
 
 Chaque module suit le même patron, par exemple pour le CRM :
 
@@ -226,11 +226,46 @@ ECF_CRM_BLD_CONFIGSTAGES  - configure le pipeline
 ECF_CRM_BLD_RIGHTS        - configure les droits d'acces
 ECF_CRM_BLD_ACTIVATE      - active le module (declenche par l'operateur, pas automatique)
 ECF_CRM_BLD_DEACTIVATE    - desactive le module (reversible)
-ECF_CRM_RUN_CREATELEAD    - cree une piste de vente reelle
+ECF_CRM_RUN_CREATELEAD    - cree une piste de vente reelle (ECFRCRCL, CONSTRUIT - reference)
 ECF_CRM_RUN_CONVERTOPP    - convertit une piste en opportunite
 ECF_CRM_RUN_MOVESTAGE     - fait avancer une opportunite dans le pipeline
 ECF_CRM_RUN_MARKWON       - marque une opportunite gagnee
 ECF_CRM_RUN_MARKLOST      - marque une opportunite perdue (avec motif)
 ```
 
-Voir `jobs_table.csv` pour la liste exhaustive une fois chaque module construit.
+### `ECFRCRCL` (`ECF_CRM_RUN_CREATELEAD`) — job de référence du patron Tier 1
+
+Premier job métier réel construit, sert de patron à tous les suivants.
+Différences structurelles avec un job Tier 0 (`BLD`) :
+
+- **`OUT_COND=NONE`** : un job métier n'est jamais "fait une fois pour
+  toutes" — il tourne à chaque lancement de l'orchestrateur. Nécessite
+  le correctif du 4 septembre 2026 dans `lib/commun.sh`
+  (`job_done()`/`mark_done()` traitent `NONE` comme "jamais de jalon
+  permanent", au lieu de partager un vrai fichier `state/NONE.ok` entre
+  tous les jobs `NONE` - bug latent trouvé en construisant CE job,
+  jamais déclenché avant car aucun job répétable n'existait). Garde-fou
+  complémentaire dans `orchestrator.sh` (`RAN_THIS_RUN`) : un job
+  `NONE` ne s'exécute qu'une fois par lancement de l'orchestrateur,
+  jamais une fois par passe de la boucle multi-passes (jusqu'à 30x
+  sinon).
+- **Entrée réelle, jamais de donnée inventée** : lit
+  `$OPERATIONS_DIR/cr/rcv/*.csv`, valide l'en-tête exact avant de
+  traiter la moindre ligne (règle documentée plus haut), crée les
+  pistes via `_odoo_shell_exec`, puis déplace le fichier traité vers
+  `arc/` (jamais laissé dans `rcv/`, jamais retraité au lancement
+  suivant) et déclare son chemin dans `$ECF_JOB_PATHS_FILE`.
+- **Générique, jamais lié à une société fictive** : contrairement aux
+  jobs `ILL1`/`ILL2`/`ILL3`, ce job traite n'importe quel CSV respectant
+  le contrat d'en-tête, pour n'importe quelle société réelle en base.
+- **Validé par la matrice, jamais dupliqué pour elle** : les 30
+  scénarios "Transaction"/"Tiers-Clients" de
+  `docs/MATRICE_MBTI_ODOO.xlsx` (× 16 profils) sont le plan de test de
+  CE job unique — jamais 480 jobs séparés. Convertir la matrice 1:1 en
+  jobs produirait 30 copies de "créer une piste" qui ne varient que par
+  le ton du commentaire, absurde en exploitation réelle.
+
+Les jobs `ECF_CRM_RUN_CONVERTOPP`/`MOVESTAGE`/`MARKWON`/`MARKLOST` et
+l'équivalent pour les 33 autres modules restent à construire, module
+par module, sur ce même patron. Voir `jobs_table.csv` pour la liste
+exhaustive à mesure qu'ils sont ajoutés.
