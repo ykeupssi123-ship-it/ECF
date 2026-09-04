@@ -67,6 +67,10 @@ Chaque action exige une raison et retape le JOB_ID en confirmation
 - [`docs/GUIDE_EXPLOITATION_SENIOR.md`](docs/GUIDE_EXPLOITATION_SENIOR.md)
   — guide d'exploitation par scénarios réels (pas une liste de
   commandes).
+- [`docs/TABLEAU_DE_BORD_CYCLES_OPERATOIRES.xlsx`](docs/TABLEAU_DE_BORD_CYCLES_OPERATOIRES.xlsx)
+  — objectif métier réel et cycle calendaire (EOD/EOM/TFJ) par module,
+  le cycle EOD Ventes réel en détail, une simulation à ~50 traitements
+  sous le vrai algorithme de parallélisme, et la parité Control-M.
 
 ## Principe directeur
 
