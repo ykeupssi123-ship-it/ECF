@@ -91,16 +91,24 @@ $ECFOP (/opt/odoo/operations)   zone d'echange par module : rcv/snd/tmp/arc
 | Isolation de panne (un service en échec n'arrête pas les autres) | ✅ `FAILED_SERVICES` (fichiers, `state/run_tmp/`) |
 | Exécution parallèle par vague | ✅ depuis le 4 septembre 2026 (`run_job_async`, `MAX_PARALLEL_JOBS`) |
 | SYSOUT / historique par exécution | ✅ `state/history/<JOB_ID>/`, `bin/view_history.sh` |
-| Calendrier (jobs EOD/EOM/TFJ auto-déclenchés) | ✅ `bin/montee_au_plan.sh` (`CYCLE_WINDOWS`) + minuteurs systemd — 1 cycle réel construit (Ventes EOD), 30+ modules restants sur le même patron |
-| Montée au plan / New Day (snapshot quotidien) | ✅ `bin/montee_au_plan.sh`, `state/plan/<date>.csv` — vérifié en sandbox (ouverture, idempotence, archivage, réouverture au jour suivant), jamais sur une vraie VM avec minuteur réel |
+| Calendrier TFJ/EOM/EOW/EOQ/EOY (chaînes auto-déclenchées) | ✅ `bin/montee_au_plan.sh` (`CYCLE_WINDOWS`, 5 cadences) + minuteurs systemd — 1 cycle TFJ réel construit (Ventes), 1 cycle PURGE (mensuel) |
+| EOD/CUTOFF (marqueur horodaté, heure fixe) | ✅ `ECFCEOD1` (Comptabilité, 23:50) et `ECFCCUT1` (Achat, 15h) — minuteur systemd dédié par marqueur, jamais celui de `montee_au_plan.sh` |
+| JOUR/NRT (intraday, garde horaire interne) | ✅ `ECFJVTSV` (Ventes) — job Tier 1 classique + garde horaire, fréquence réelle via le minuteur périodique de l'orchestrateur |
+| REPLAY (rejeu après incident) | ✅ déjà couvert — `bin/rerun_job.sh`/`bin/order_job.sh`, rien à construire |
+| PURGE (archivage à froid périodique) | ✅ `ECFCPRG1` — déplace les fichiers `$ECFOP/*/arc/` de plus de 90 jours vers `operations_archive_froide/` |
+| SIMULATION (stress test sur miroir) | ❌ absent — nécessite un environnement miroir/sandbox dédié, n'existe pas |
+| REALTIME (événementiel, Kafka/webhooks) | ❌ absent, volontairement — architecture événementielle incompatible avec un ordonnanceur batch bash/CSV |
+| Montée au plan / New Day (snapshot quotidien) | ✅ `bin/montee_au_plan.sh`, `state/plan/<date>.csv` — vérifié en sandbox (ouverture, idempotence, archivage, réouverture au jour suivant, 4 cadences testées unitairement), jamais sur une vraie VM avec minuteur réel |
 | Statistiques d'exécution roulées par jour | ❌ absent — les données brutes existent (`state/JOBS_HISTORY.csv`), rien ne les agrège encore par jour |
 | Couleurs d'état en temps réel dans un terminal | ❌ absent — `bin/monitoring.sh` reste textuel |
 | Hiérarchie Folder/Application/Sub-Application à 3 niveaux | ❌ absent — un seul niveau (`SERVICE`) |
 
 ## Avancement Tier 1 métier (31/34 modules restants)
 
-Terminés : **CRM** (5 jobs), **Ventes** (3 jobs + 1 cycle EOD de 3 jobs),
-**Achat** (3 jobs). Patron reproductible (voir
+Terminés : **CRM** (5 jobs), **Ventes** (3 jobs + 1 cycle TFJ de 3 jobs
++ 1 job JOUR), **Achat** (3 jobs + 1 marqueur CUTOFF). **Comptabilité**
+a son marqueur EOD (`ECFCEOD1`) mais pas encore ses jobs métier Tier 1
+propres (création facture, etc.). Patron reproductible (voir
 `docs/CONVENTION_NOMMAGE.md`, section Tier 1) : un job générique par
 opération métier réelle, jamais un job par scénario de test — la
 matrice MBTI (`docs/MATRICE_MBTI_ODOO.xlsx`, 480 scénarios) est le plan
@@ -110,10 +118,25 @@ de test de ces jobs, jamais traduite 1:1 en jobs.
 
 Un module actif ne s'arrête jamais tout seul — il continue de tourner
 en tâche de fond selon son propre calendrier (voir
-`docs/CONVENTION_NOMMAGE.md`, section "Cycles calendaires"). Un seul
-cycle réel construit à ce jour : **Ventes — clôture EOD**
-(`ECFCVTRL`→`ECFCVTNT`→`ECFCVTRP`, quotidien). Le mécanisme
-(`bin/montee_au_plan.sh` + 2 minuteurs systemd) est générique — ajouter
-un cycle à un autre module ne demande qu'une ligne dans
-`CYCLE_WINDOWS` et sa propre chaîne de jobs, jamais un changement du
-moteur lui-même.
+`docs/CONVENTION_NOMMAGE.md`, section "Cycles calendaires", pour la
+taxonomie complète JOUR/TFJ/EOD/EOW/EOM/EOQ/EOY/CUTOFF/REPLAY/PURGE/
+SIMULATION/REALTIME). Réel construit à ce jour :
+
+- **TFJ** (chaîne de nuit) : Ventes — clôture quotidienne
+  (`ECFCVTRL`→`ECFCVTNT`→`ECFCVTRP`).
+- **EOD** (marqueur horodaté) : Comptabilité — bascule de date valeur
+  (`ECFCEOD1`, 23:50, son propre minuteur).
+- **CUTOFF** (marqueur horodaté, un flux précis) : Achat — commandes
+  fournisseurs (`ECFCCUT1`, 15h).
+- **JOUR/NRT** (intraday) : Ventes — suivi des devis envoyés
+  (`ECFJVTSV`, garde horaire 8h-18h).
+- **PURGE** (mensuel) : Système — archivage à froid de `$ECFOP/*/arc/`
+  (`ECFCPRG1`).
+
+Le mécanisme (`bin/montee_au_plan.sh`, 5 cadences : `DAILY`/`WEEKLY`/
+`MONTHLY`/`QUARTERLY`/`YEARLY`, + 2 minuteurs systemd pour TFJ/EOM/EOW/
+EOQ/EOY) est générique — ajouter un cycle de ce type à un autre module
+ne demande qu'une ligne dans `CYCLE_WINDOWS` et sa propre chaîne de
+jobs. EOD/CUTOFF suivent un patron différent (marqueur horodaté, son
+propre minuteur dédié à heure fixe — jamais celui de
+`montee_au_plan.sh`).

@@ -1,10 +1,10 @@
 #!/bin/bash
-# ECFCVTRP - ECF_VENTE_CYC_RAPPORT - 3e et DERNIER job du cycle EOD
-# Ventes (voir ECFCVTRL pour le patron complet). IN_COND=EOD_VENTES_NETTOYAGE_OK.
+# ECFCVTRP - ECF_VENTE_CYC_RAPPORT - 3e et DERNIER job du cycle TFJ
+# Ventes (voir ECFCVTRL pour le patron complet). IN_COND=TFJ_VENTES_NETTOYAGE_OK.
 #
 # Objectif metier reel : rapport de fin de journee (commandes
 # confirmees aujourd'hui, chiffre d'affaires du jour) - ecrit dans
-# $ECFOP/vt/snd, jamais juste affiche puis perdu. OUT_COND=EOD_VENTES_TERMINE
+# $ECFOP/vt/snd, jamais juste affiche puis perdu. OUT_COND=TFJ_VENTES_TERMINE
 # - JOB QUI MARQUE LA FIN DU TRAITEMENT (voir la capture Control-M
 # fournie en session : le dernier job d'une chaine, celui qu'on regarde
 # pour savoir "le cycle du jour est-il termine ?"). Remis a zero par

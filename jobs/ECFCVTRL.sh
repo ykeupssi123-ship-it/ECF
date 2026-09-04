@@ -1,14 +1,14 @@
 #!/bin/bash
-# ECFCVTRL - ECF_VENTE_CYC_RELANCE - Premier job du cycle EOD Ventes
+# ECFCVTRL - ECF_VENTE_CYC_RELANCE - Premier job du cycle TFJ Ventes
 # (voir bin/montee_au_plan.sh, docs/CONVENTION_NOMMAGE.md section
-# "Cycles calendaires"). IN_COND=EOD_VENTES_WINDOW_OPEN (ouverte
+# "Cycles calendaires"). IN_COND=TFJ_VENTES_WINDOW_OPEN (ouverte
 # uniquement par montee_au_plan.sh, une fois par jour).
 #
 # Objectif metier reel : detecter les devis (sale.order, state=draft)
 # vieux de plus de 5 jours - jamais relance automatique par email ici
 # (aucune garantie que le serveur SMTP reel soit configure sur toute
 # instance) - le rapport est ecrit dans $ECFOP/vt/snd pour qu'un
-# commercial (ou un futur job d'envoi) le traite. OUT_COND=EOD_VENTES_RELANCE_OK
+# commercial (ou un futur job d'envoi) le traite. OUT_COND=TFJ_VENTES_RELANCE_OK
 # (REEL, pas NONE - remis a zero par montee_au_plan.sh le cycle
 # suivant, jamais par ce job lui-meme).
 set -uo pipefail

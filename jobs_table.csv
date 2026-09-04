@@ -19,6 +19,7 @@ ECFBSMT,ECF_SYS_BLD_SMTP,ODOO_HOST,ALWAYS,ECFBSMT.sh,Relais SMTP sortant local (
 ECFBDNS,ECF_SYS_BLD_DNSZONE,ODOO_HOST,ALWAYS,ECFBDNS.sh,Resolution interne pour l'URL de demo,ODOO_SMTP_OK,ODOO_DNS_OK,SYS
 ECFBBCK,ECF_SYS_BLD_BACKUP,ODOO_HOST,ALWAYS,ECFBBCK.sh,Sauvegarde quotidienne (base + filestore) - dernier prealable technique reel,ODOO_DNS_OK,ODOO_SYSTEME_PRET,SYS
 ECFRVER,ECF_SYS_RUN_SYSTEMVERIFY,ODOO_HOST,ALWAYS,ECFRVER.sh,Verification finale de bout en bout (comme un vrai client) - tourne en parallele des modules jamais avant eux,ODOO_SYSTEME_PRET,ODOO_VERIFICATION_OK,SYS
+ECFCPRG1,ECF_SYS_CYC_PURGE,ODOO_HOST,ALWAYS,ECFCPRG1.sh,Archivage a froid des fichiers arc/ de plus de 90 jours (cycle PURGE mensuel),PURGE_ARC_WINDOW_OPEN,PURGE_ARC_TERMINE,SYS
 ECFBCTAC,ECF_CONTACTS_BLD_ACTIVATE,ODOO_HOST,ALWAYS,ECFBCTAC.sh,Activation module contacts : repertoire des contacts (clients fournisseurs partenaires),ODOO_SYSTEME_PRET,CONTACTS_ACTIVE,CT
 ECFBCTDE,ECF_CONTACTS_BLD_DEACTIVATE,ODOO_HOST,ALWAYS,ECFBCTDE.sh,Desactivation module contacts : repertoire des contacts (clients fournisseurs partenaires),CONTACTS_ACTIVE,CONTACTS_INACTIVE,CT
 ECFBCLAC,ECF_CALENDRIER_BLD_ACTIVATE,ODOO_HOST,ALWAYS,ECFBCLAC.sh,Activation module calendar : Agenda partage et rendez-vous,ODOO_SYSTEME_PRET,CALENDRIER_ACTIVE,CL
@@ -37,16 +38,19 @@ ECFBVTDE,ECF_VENTE_BLD_DEACTIVATE,ODOO_HOST,ALWAYS,ECFBVTDE.sh,Desactivation mod
 ECFRVTDV,ECF_VENTE_RUN_CREATEDEVIS,ODOO_HOST,ALWAYS,ECFRVTDV.sh,Cree un devis (une ou plusieurs lignes) depuis un CSV depose dans operations/vt/rcv (job repetable Tier 1),VENTE_ACTIVE,NONE,VT
 ECFRVTCF,ECF_VENTE_RUN_CONFIRMORDER,ODOO_HOST,ALWAYS,ECFRVTCF.sh,Confirme un devis existant en commande depuis un CSV depose dans operations/vt/rcv (job repetable Tier 1),VENTE_ACTIVE,NONE,VT
 ECFRVTIN,ECF_VENTE_RUN_CREATEINVOICE,ODOO_HOST,ALWAYS,ECFRVTIN.sh,Cree et valide la facture d une commande confirmee depuis un CSV depose dans operations/vt/rcv (job repetable Tier 1),VENTE_ACTIVE,NONE,VT
-ECFCVTRL,ECF_VENTE_CYC_RELANCE,ODOO_HOST,ALWAYS,ECFCVTRL.sh,Detecte les devis en attente depuis plus de 5 jours - 1er job du cycle EOD Ventes,EOD_VENTES_WINDOW_OPEN,EOD_VENTES_RELANCE_OK,VT
-ECFCVTNT,ECF_VENTE_CYC_NETTOYAGE,ODOO_HOST,ALWAYS,ECFCVTNT.sh,Annule les devis perimes depuis plus de 30 jours - 2e job du cycle EOD Ventes,EOD_VENTES_RELANCE_OK,EOD_VENTES_NETTOYAGE_OK,VT
-ECFCVTRP,ECF_VENTE_CYC_RAPPORT,ODOO_HOST,ALWAYS,ECFCVTRP.sh,Rapport de fin de journee (commandes et CA du jour) - dernier job du cycle EOD Ventes,EOD_VENTES_NETTOYAGE_OK,EOD_VENTES_TERMINE,VT
+ECFCVTRL,ECF_VENTE_CYC_RELANCE,ODOO_HOST,ALWAYS,ECFCVTRL.sh,Detecte les devis en attente depuis plus de 5 jours - 1er job du cycle TFJ Ventes,TFJ_VENTES_WINDOW_OPEN,TFJ_VENTES_RELANCE_OK,VT
+ECFCVTNT,ECF_VENTE_CYC_NETTOYAGE,ODOO_HOST,ALWAYS,ECFCVTNT.sh,Annule les devis perimes depuis plus de 30 jours - 2e job du cycle TFJ Ventes,TFJ_VENTES_RELANCE_OK,TFJ_VENTES_NETTOYAGE_OK,VT
+ECFCVTRP,ECF_VENTE_CYC_RAPPORT,ODOO_HOST,ALWAYS,ECFCVTRP.sh,Rapport de fin de journee (commandes et CA du jour) - dernier job du cycle TFJ Ventes,TFJ_VENTES_NETTOYAGE_OK,TFJ_VENTES_TERMINE,VT
+ECFJVTSV,ECF_VENTE_JOUR_SUIVI,ODOO_HOST,ALWAYS,ECFJVTSV.sh,Suivi intraday des devis envoyes sans reponse depuis plus de 2h (job JOUR - garde horaire interne 8h-18h),VENTE_ACTIVE,NONE,VT
 ECFBCPAC,ECF_COMPTA_BLD_ACTIVATE,ODOO_HOST,ALWAYS,ECFBCPAC.sh,Activation module account : Facturation et comptabilite de base,ODOO_SYSTEME_PRET,COMPTA_ACTIVE,CP
 ECFBCPDE,ECF_COMPTA_BLD_DEACTIVATE,ODOO_HOST,ALWAYS,ECFBCPDE.sh,Desactivation module account : Facturation et comptabilite de base,COMPTA_ACTIVE,COMPTA_INACTIVE,CP
+ECFCEOD1,ECF_COMPTA_EOD_BASCULE,ODOO_HOST,ALWAYS,ECFCEOD1.sh,Marqueur EOD - bascule la date valeur comptable de J a J+1 (declenche a 23h50 par son propre minuteur),COMPTA_ACTIVE,NONE,CP
 ECFBAHAC,ECF_ACHAT_BLD_ACTIVATE,ODOO_HOST,ALWAYS,ECFBAHAC.sh,Activation module purchase : Commandes et appels d offres fournisseurs,ODOO_SYSTEME_PRET,ACHAT_ACTIVE,AH
 ECFBAHDE,ECF_ACHAT_BLD_DEACTIVATE,ODOO_HOST,ALWAYS,ECFBAHDE.sh,Desactivation module purchase : Commandes et appels d offres fournisseurs,ACHAT_ACTIVE,ACHAT_INACTIVE,AH
 ECFRAHPO,ECF_ACHAT_RUN_CREATEPO,ODOO_HOST,ALWAYS,ECFRAHPO.sh,Cree une commande fournisseur (une ou plusieurs lignes) depuis un CSV depose dans operations/ah/rcv (job repetable Tier 1),ACHAT_ACTIVE,NONE,AH
 ECFRAHCF,ECF_ACHAT_RUN_CONFIRMPO,ODOO_HOST,ALWAYS,ECFRAHCF.sh,Confirme une commande fournisseur existante depuis un CSV depose dans operations/ah/rcv (job repetable Tier 1),ACHAT_ACTIVE,NONE,AH
 ECFRAHRC,ECF_ACHAT_RUN_RECEIVE,ODOO_HOST,ALWAYS,ECFRAHRC.sh,Receptionne les marchandises d une commande confirmee depuis un CSV depose dans operations/ah/rcv (job repetable Tier 1),ACHAT_ACTIVE,NONE,AH
+ECFCCUT1,ECF_ACHAT_CUTOFF_ORDRES,ODOO_HOST,ALWAYS,ECFCCUT1.sh,Marqueur CUTOFF 15h - fixe la date de valeur (J ou J+1) des futures commandes fournisseurs,ACHAT_ACTIVE,NONE,AH
 ECFBTAC,ECF_STOCK_BLD_ACTIVATE,ODOO_HOST,ALWAYS,ECFBTAC.sh,Activation module stock : Gestion des stocks et logistique,ODOO_SYSTEME_PRET,STOCK_ACTIVE,ST
 ECFBTDE,ECF_STOCK_BLD_DEACTIVATE,ODOO_HOST,ALWAYS,ECFBTDE.sh,Desactivation module stock : Gestion des stocks et logistique,STOCK_ACTIVE,STOCK_INACTIVE,ST
 ECFBMRAC,ECF_MRP_BLD_ACTIVATE,ODOO_HOST,ALWAYS,ECFBMRAC.sh,Activation module mrp : Ordres de fabrication et nomenclatures,ODOO_SYSTEME_PRET,MRP_ACTIVE,MR

@@ -217,24 +217,50 @@ d'échange de fichiers réels).
 
 ## Cycles calendaires (Phase B, démarrée le 4 septembre 2026)
 
-Les jobs Tier 1 vus jusqu'ici (`OUT_COND=NONE`) sont **déclenchés par
-fichier** — ils tournent à chaque lancement de l'orchestrateur, sans
-notion de calendrier. Un vrai traitement EOD/EOM (Control-M : jobs
-`CYC`, séquence linéaire A→B→C se terminant seule, redémarrée par une
-« montée au plan » quotidienne) a besoin d'autre chose :
+### Taxonomie réelle (corrigée le 4 septembre 2026 — vocabulaire d'exploitation bancaire fourni par l'utilisateur, jamais approximée depuis)
+
+| Type | Nature du déclenchement | Fréquence | Cas d'usage réel |
+|---|---|---|---|
+| **JOUR / NRT** | Automatique, fréquence fixe ou continu (ex. toutes les heures 8h-18h, ou micro-batch 5-15 min) | Quotidienne, pendant la journée | Synchronisations d'interfaces, sauvegardes à chaud, alertes temps réel |
+| **TFJ** | Automatique, déclenché à la fermeture (guichets/agences) | Quotidienne, fenêtre nocturne | Chaîne d'orchestration de fin de journée : gel des transactions, réconciliations, calculs de soldes |
+| **EOD** | Horodaté (ex. 23h50) | Quotidienne | Marqueur logique UNIQUE — bascule de la date valeur comptable de J à J+1, jamais toute une chaîne |
+| **EOW** | Automatique (vendredi soir/samedi) | Hebdomadaire | Positions moyennes, consolidation des risques hebdomadaires |
+| **EOM** | Calendaire (dernier jour du mois) | Mensuelle | Paies, amortissements, arrêtés comptables, rapports réglementaires |
+| **EOQ** | Automatique (fin de trimestre) | Trimestrielle | Ratios prudentiels, reporting réglementaire |
+| **EOY** | Automatique (31 décembre) | Annuelle | Bascule d'exercice comptable N→N+1, amortissements annuels, états fiscaux |
+| **CUTOFF** | Horaire légal strict (ex. 15h) | Quotidienne | Heure limite de prise en compte des ordres du jour — après, bascule automatique en J+1 |
+| **REPLAY** | Exceptionnel, manuel ou incident | Ponctuelle | Rejeu d'une chaîne en erreur après correction — déjà couvert par `bin/rerun_job.sh`/`bin/order_job.sh`, rien à construire |
+| **PURGE** | Périodique (dépassement de rétention) | Périodique | Nettoyage de tables temporaires, archivage à froid |
+| **SIMULATION** | Sur environnement miroir/sandbox | Ponctuelle | Stress test, impact d'une hypothèse — nécessite un environnement dédié, hors périmètre actuel |
+| **REALTIME** | Continu, événementiel (Kafka/webhooks) | Fil de l'eau | Anti-fraude transaction, autorisation immédiate — architecture événementielle, hors périmètre d'un ordonnanceur batch bash/CSV |
+| **ON_DEMAND** | Manuel (opérateur) ou webhook/API | Ponctuelle | Déjà couvert par les jobs Tier 1 pilotés par fichier + `bin/run_now.sh`/`bin/order_job.sh` |
+
+**Erreur corrigée le 4 septembre 2026** : le premier cycle construit
+avait été nommé `EOD_VENTES_*` alors qu'il s'agit structurellement d'un
+**TFJ** (une chaîne de plusieurs jobs qui s'enchaînent et se terminent
+seuls, pas un marqueur horodaté unique) — renommé `TFJ_VENTES_*`
+partout (`jobs_table.csv`, `bin/montee_au_plan.sh`, les 3 scripts de
+la chaîne). Un vrai marqueur EOD a été construit séparément
+(`ECFCEOD1`, voir plus bas) pour ne pas laisser le terme mal employé.
 
 - **`bin/montee_au_plan.sh`** (équivalent New Day/Active Plan
   Control-M) — pour chaque cycle enregistré dans son registre
-  `CYCLE_WINDOWS` (ex. `EOD_VENTES_WINDOW_OPEN`), ouvre une fois par
-  jour (ou par mois, `MONTHLY`) une condition `*_WINDOW_OPEN`, après
-  avoir **archivé** (jamais supprimé silencieusement,
-  `state/plan/history/`) le jalon terminal du cycle précédent.
-  Idempotent — relancé plusieurs fois le même jour, ne fait rien après
-  la première fois. Écrit un instantané daté, `state/plan/<date>.csv`
-  — LE plan du jour, consultable.
-- Les jobs de la chaîne utilisent des **`OUT_COND` réels** (pas
-  `NONE`) — un vrai jalon persistant, remis à zéro uniquement par
-  `montee_au_plan.sh` au cycle suivant, jamais par le job lui-même.
+  `CYCLE_WINDOWS` (ex. `TFJ_VENTES_WINDOW_OPEN`), ouvre une fois par
+  période (`DAILY`=TFJ, `MONTHLY`=EOM — voir extension `WEEKLY`/EOW,
+  `QUARTERLY`/EOQ, `YEARLY`/EOY plus bas) une condition
+  `*_WINDOW_OPEN`, après avoir **archivé** (jamais supprimé
+  silencieusement, `state/plan/history/`) le jalon terminal du cycle
+  précédent. Idempotent — relancé plusieurs fois la même période, ne
+  fait rien après la première fois. Écrit un instantané daté,
+  `state/plan/<date>.csv` — LE plan du jour, consultable.
+  **Ne gère PAS** : JOUR/NRT (job Tier 1 classique + garde horaire
+  interne, voir `ECFJVTSV.sh`), EOD (marqueur horodaté, son propre
+  minuteur à heure fixe, voir `ECFCEOD1.sh`), CUTOFF (même principe
+  qu'EOD, une heure stricte plutôt qu'une fenêtre quotidienne).
+- Les jobs de chaîne (TFJ/EOM/EOW/EOQ/EOY) utilisent des **`OUT_COND`
+  réels** (pas `NONE`) — un vrai jalon persistant, remis à zéro
+  uniquement par `montee_au_plan.sh` au cycle suivant, jamais par le
+  job lui-même.
 - **Aucun changement de schéma `jobs_table.csv`** : le calendrier vit
   entièrement dans `bin/montee_au_plan.sh` (`CYCLE_WINDOWS`), pas dans
   une colonne — 10 points d'analyse positionnelle (`orchestrator.sh` et
@@ -242,24 +268,67 @@ notion de calendrier. Un vrai traitement EOD/EOM (Control-M : jobs
   `CYCLE`, juste après la correction d'un bug critique sur ces mêmes
   fichiers (voir plus bas) — risque jugé disproportionné pour le
   bénéfice, contre une solution additive équivalente.
-- **Deux minuteurs systemd distincts, jamais fusionnés** (voir
-  `setup/installer_service_montee_au_plan.sh` et
+- **Deux minuteurs systemd distincts pour TFJ/EOM, jamais fusionnés**
+  (voir `setup/installer_service_montee_au_plan.sh` et
   `setup/installer_service_orchestrateur_periodique.sh`) : l'un ouvre
   les fenêtres (00:05, quotidien), l'autre relance `orchestrator.sh`
   toutes les 15 minutes pour que les jobs devenus éligibles s'exécutent
-  réellement — une fenêtre ouverte sans relance périodique ne ferait
-  jamais tourner sa chaîne.
+  réellement. **Un TROISIÈME minuteur, dédié et distinct**, pour tout
+  marqueur EOD/CUTOFF (heure fixe précise, ex. `ecf-eod-compta.timer`
+  à 23:50) — jamais le même minuteur que l'ouverture de fenêtre TFJ.
 
-### Exemple réel construit : cycle EOD Ventes
+### Exemple réel construit : cycle TFJ Ventes
 
 `ECFCVTRL` (détecte les devis en attente > 5 jours, rapport dans
 `$ECFOP/vt/snd`) → `ECFCVTNT` (annule les devis périmés > 30 jours) →
 `ECFCVTRP` (rapport de fin de journée : commandes et CA du jour,
-`OUT_COND=EOD_VENTES_TERMINE` — le job qui marque la fin du
+`OUT_COND=TFJ_VENTES_TERMINE` — le job qui marque la fin du
 traitement). Vérifié par un harnais de simulation isolé (jamais
 commité) : ouverture, idempotence le même jour, archivage et
 réouverture correcte au jour suivant (simulé en antidatant le marqueur
 d'ouverture, jamais en trafiquant l'horloge système).
+
+### Exemple réel construit : marqueur EOD Comptabilité
+
+`ECFCEOD1` (`ECF_COMPTA_EOD_BASCULE`) — bascule la date valeur
+comptable courante de J à J+1, écrit un audit (`state/EOD_BASCULES_AUDIT.csv`),
+idempotent par construction interne (vérifie la date déjà marquée,
+jamais un jalon permanent remis à zéro par `montee_au_plan.sh` — ce
+marqueur DOIT au contraire être réécrit chaque jour). Son propre
+minuteur systemd, `ecf-eod-compta.timer` (23:50) — voir
+`setup/installer_service_eod_compta.sh`.
+
+### Exemple réel construit : job JOUR (intraday) Ventes
+
+`ECFJVTSV` (`ECF_VENTE_JOUR_SUIVI`) — suivi des devis envoyés au client
+sans réponse depuis plus de 2h, pendant les heures ouvrées (8h-18h,
+garde horaire interne). `OUT_COND=NONE` comme un job Tier 1 classique
+— la fréquence réelle vient du minuteur périodique de l'orchestrateur
+(15 min), combiné à la garde horaire qui rend le job un no-op hors
+plage. Distinct du nettoyage de fond TFJ (qui traite les devis
+BROUILLON, jamais envoyés).
+
+### Ce qui reste à construire (roadmap honnête)
+
+- **EOW/EOQ/EOY** : extension directe de `CYCLE_WINDOWS`
+  (`WEEKLY`/`QUARTERLY`/`YEARLY`), même mécanisme qu'EOM — pas encore
+  d'exemple réel construit.
+- **CUTOFF** : même principe qu'EOD (marqueur horodaté, minuteur
+  dédié) mais avec une sémantique de bascule J/J+1 sur un FLUX précis
+  plutôt que sur la comptabilité globale — pas encore d'exemple réel.
+- **PURGE** : nettoyage périodique des fichiers archivés
+  (`$ECFOP/*/arc/`) au-delà d'une rétention — pas encore construit
+  côté ECF (WEF a `maintenance/MNT_purge_historique.sh` pour
+  l'historique des jobs, jamais pour les données métier `$ECFOP`).
+- **SIMULATION** : nécessite un environnement miroir/sandbox dédié —
+  hors périmètre tant qu'un tel environnement n'existe pas.
+- **REALTIME** : architecture événementielle (Kafka/webhooks),
+  structurellement différente d'un ordonnanceur batch bash/CSV — noté
+  honnêtement comme hors périmètre, jamais simulé avec les outils
+  actuels.
+- **REPLAY** : déjà couvert, rien à construire (`bin/rerun_job.sh` =
+  rejoue une instance ; `bin/order_job.sh` = force malgré des
+  dépendances manquantes).
 
 ## Tier 1 — jobs métier réels (éclatement atomique, démarré le 4 septembre 2026)
 

@@ -971,3 +971,65 @@ ouverture. Ce qui reste à confirmer sur une vraie VM : le comportement
 réel des minuteurs systemd sur la durée (jamais testé au-delà d'une
 exécution manuelle du script), et le contenu métier réel des rapports
 Odoo (`ECFCVTRL`/`ECFCVTRP`) contre une vraie base.
+
+---
+
+## 2026-09-04 (suite) — Correction de taxonomie (JOUR/TFJ/EOD/EOM) + taxonomie bancaire complète (EOW/EOQ/EOY/CUTOFF/REPLAY/PURGE/SIMULATION/REALTIME)
+
+Erreur trouvée par relecture utilisateur : le premier cycle construit
+avait été nommé `EOD_VENTES_*` — or EOD, dans le vocabulaire réel
+fourni, désigne un **marqueur logique unique et horodaté** (bascule de
+la date valeur comptable), jamais toute une chaîne de plusieurs jobs.
+Ce que j'avais construit (`ECFCVTRL`→`ECFCVTNT`→`ECFCVTRP`) est
+structurellement un **TFJ** (chaîne de nuit, déclenchée à la fermeture,
+se terminant seule). Renommé partout (`jobs_table.csv`,
+`bin/montee_au_plan.sh`, les 3 scripts) : `TFJ_VENTES_*`.
+
+**Deux nouveaux exemples réels construits pour ne pas laisser les
+termes mal employés** :
+- `ECFCEOD1` (`ECF_COMPTA_EOD_BASCULE`) — un vrai marqueur EOD, son
+  propre minuteur systemd à heure fixe (23:50,
+  `setup/installer_service_eod_compta.sh`), jamais celui de
+  `montee_au_plan.sh` (00:05, réservé aux fenêtres TFJ/EOM).
+- `ECFJVTSV` (`ECF_VENTE_JOUR_SUIVI`) — un vrai job JOUR (suivi
+  intraday des devis envoyés sans réponse), `OUT_COND=NONE` + garde
+  horaire interne (8h-18h) plutôt qu'un mécanisme de fenêtre dédié — la
+  fréquence vient du minuteur périodique de l'orchestrateur (15 min).
+
+**Taxonomie complète fournie ensuite par l'utilisateur** (vocabulaire
+CBS réel : Amplitude, SAB, Temenos) — bien plus large que JOUR/TFJ/EOD/
+EOM/ON_DEMAND : clôtures calendaires supplémentaires (EOW hebdomadaire,
+EOQ trimestriel, EOY annuel), modes d'exécution (REALTIME événementiel,
+NRT micro-batch 5-15 min, INTRADAY heures fixes, DIFFÉRÉ hors pointe),
+et traitements d'exploitation (CUTOFF horaire légal strict, REPLAY
+rejeu après incident, PURGE nettoyage périodique, SIMULATION stress
+test sur miroir). Voir `docs/CONVENTION_NOMMAGE.md`, section "Cycles
+calendaires", pour la table complète et le statut réel de chacun.
+
+**Construit dans la foulée** :
+- `bin/montee_au_plan.sh` : `CYCLE_WINDOWS` supporte désormais
+  `WEEKLY` (EOW, samedi), `QUARTERLY` (EOQ, 1er jour d'un nouveau
+  trimestre), `YEARLY` (EOY, 1er janvier), en plus de `DAILY`/`MONTHLY`
+  déjà existants — même mécanisme d'archivage/réouverture, jamais
+  dupliqué. Vérifié par un test unitaire isolé des 4 branches de
+  cadence (dates simulées, jamais l'horloge système) : 8/8 assertions
+  passent (samedi/dimanche pour WEEKLY, 1er/15 du mois pour MONTHLY,
+  1er avril vs 1er mai pour QUARTERLY, 1er janvier vs 1er avril pour
+  YEARLY).
+- `ECFCCUT1` (`ECF_ACHAT_CUTOFF_ORDRES`) — marqueur CUTOFF réel (15h),
+  même famille structurelle qu'un marqueur EOD mais pour UN FLUX précis
+  (commandes fournisseurs) : avant 15h, date de valeur J ; après,
+  bascule automatique en J+1.
+- `ECFCPRG1` (`ECF_SYS_CYC_PURGE`) — premier cycle PURGE réel,
+  archivage à froid (déplacement, jamais suppression silencieuse) des
+  fichiers de `$ECFOP/*/arc/` de plus de 90 jours vers
+  `operations_archive_froide/`, cadence `MONTHLY` (nouvelle entrée
+  `PURGE_ARC_WINDOW_OPEN` dans `CYCLE_WINDOWS`).
+
+**Documenté honnêtement comme non construit, avec la raison précise** :
+REPLAY (déjà couvert par `bin/rerun_job.sh`/`bin/order_job.sh`, rien à
+ajouter), SIMULATION (nécessite un environnement miroir/sandbox dédié,
+n'existe pas), REALTIME (architecture événementielle Kafka/webhooks,
+structurellement incompatible avec un ordonnanceur batch bash/CSV -
+jamais simulé avec les outils actuels pour ne pas donner une fausse
+impression de couverture).

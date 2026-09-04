@@ -9,7 +9,7 @@
 # leur fenetre. Ce script ajoute un minuteur PAR-DESSUS le MEME service
 # oneshot (jamais un second service - un seul orchestrator.sh a la
 # fois, meme mecanisme de verrou), qui le relance automatiquement toutes
-# les 15 minutes. Un cycle EOD ouvert a 00:05 par ecf-montee-au-plan.timer
+# les 15 minutes. Un cycle TFJ ouvert a 00:05 par ecf-montee-au-plan.timer
 # est donc reellement execute au plus tard a 00:20, sans intervention
 # humaine - c'est CE minuteur qui fait le lien entre "la fenetre est
 # ouverte" et "les jobs tournent reellement".

@@ -4,16 +4,50 @@
 # capture d'ecran reelle Control-M, "montee au plan" = un snapshot d'un
 # cycle de traitement journalier).
 #
-# ROLE REEL (pas cosmetique) : un traitement cyclique (EOD/EOM) a besoin
-# d'un jalon PERSISTANT et REEL (OUT_COND classique, pas NONE) pour
-# garantir qu'il ne tourne qu'UNE FOIS par cycle - mais un jalon
-# persistant, une fois marque, resterait marque POUR TOUJOURS,
+# TAXONOMIE REELLE (corrigee le 2026-09-04 - fournie par l'utilisateur,
+# vocabulaire d'exploitation bancaire reel, jamais approximee depuis) :
+#
+#   JOUR (Daily/Intra-day)  : OLTP/temps reel/horaires ouvrés. Declenche
+#     automatiquement a frequence fixe (ex. toutes les heures 8h-18h)
+#     ou en continu. Cas d'usage : synchronisations d'interfaces,
+#     sauvegardes a chaud, teletransmission de flux, alertes temps reel.
+#     CE SCRIPT NE GERE PAS CE TYPE : un job JOUR est un job Tier 1
+#     classique (OUT_COND=NONE), avec sa PROPRE garde horaire interne
+#     (verifie l'heure courante, ne fait rien hors plage) - voir
+#     jobs/ECFJVTSV.sh pour l'exemple reel construit.
+#   TFJ (Traitements de nuit) : sequence/batchs lourds, declenchee
+#     automatiquement a la fermeture (guichets/agences). Chaine
+#     d'orchestration de fin de journee : gel des transactions,
+#     reconciliations, sauvegardes a froid, calculs de soldes. C'EST CE
+#     QUE CE SCRIPT GERE (cadence DAILY ci-dessous) - voir le cycle
+#     Ventes (ECFCVTRL->ECFCVTNT->ECFCVTRP, TFJ_VENTES_*).
+#   EOD (Echeance metier fin de journee) : horodate (ex. 23h50),
+#     quotidien - un MARQUEUR LOGIQUE unique (bascule de la date valeur
+#     comptable de J a J+1), jamais toute une chaine de jobs metier.
+#     CE SCRIPT NE GERE PAS CE TYPE non plus : un job EOD a son PROPRE
+#     minuteur systemd a heure fixe (23:50), pas la fenetre quotidienne
+#     00:05 de ce script - voir jobs/ECFCEOD1.sh et
+#     setup/installer_service_eod_compta.sh.
+#   EOM (Echeance metier fin de mois) : calendaire (dernier jour du
+#     mois), mensuelle. Cloture mensuelle : paies, amortissements,
+#     arretes comptables, rapports reglementaires. Cadence MONTHLY
+#     ci-dessous.
+#   ON_DEMAND : evenementiel/ad hoc, manuel (operateur) ou webhook/API,
+#     ponctuel. Deja couvert par les jobs Tier 1 pilotes par fichier
+#     (rcv/) et par bin/run_now.sh/bin/order_job.sh - rien a ajouter ici.
+#
+# ROLE REEL de CE script (pas cosmetique) : un traitement cyclique
+# (TFJ/EOM) a besoin d'un jalon PERSISTANT et REEL (OUT_COND classique,
+# pas NONE) pour garantir qu'il ne tourne qu'UNE FOIS par cycle - mais
+# un jalon persistant, une fois marque, resterait marque POUR TOUJOURS,
 # empechant le meme traitement de tourner le cycle suivant. Ce script
 # est ce qui REMET LE COMPTEUR A ZERO au bon moment (calendrier) :
 # jamais l'orchestrateur lui-meme (il ne sait rien du calendrier), un
 # processus separe, dedie, explicite.
 #
-# Pour chaque cycle enregistre dans CYCLE_WINDOWS ci-dessous :
+# Pour chaque cycle enregistre dans CYCLE_WINDOWS ci-dessous (cadence
+# DAILY = un cycle TFJ, MONTHLY = un cycle EOM - jamais utilise pour
+# JOUR ou EOD, voir plus haut) :
 #   - Si le cycle n'a pas encore ete "ouvert" pour la periode en cours
 #     (jour pour DAILY, mois pour MONTHLY) : archive le jalon terminal
 #     de la periode precedente (etat REEL, jamais suppose), efface les
@@ -40,15 +74,29 @@ PLAN_HISTORY_DIR="$PLAN_DIR/history"
 mkdir -p "$PLAN_DIR" "$PLAN_HISTORY_DIR"
 
 TODAY="$(date +%Y-%m-%d)"
-TODAY_DOM="$(date +%d)"        # jour du mois (pour MONTHLY)
+TODAY_DOM="$(date +%d)"        # jour du mois (pour MONTHLY/QUARTERLY/YEARLY)
+TODAY_MONTH="$(date +%m)"      # mois (pour QUARTERLY/YEARLY)
+TODAY_DOW="$(date +%u)"        # jour de semaine ISO, 1=lundi..7=dimanche (pour WEEKLY)
 MONTH_KEY="$(date +%Y-%m)"
+WEEK_KEY="$(date +%G-W%V)"     # annee-semaine ISO (pour WEEKLY)
+QUARTER_NUM=$(( (10#$TODAY_MONTH - 1) / 3 + 1 ))
+QUARTER_KEY="$(date +%Y)-Q${QUARTER_NUM}"
+YEAR_KEY="$(date +%Y)"
 
 # Registre des cycles connus - AJOUTER UNE LIGNE ICI pour chaque
 # nouveau cycle (jamais devine, jamais implicite) :
 #   [CONDITION_WINDOW_OPEN]="CADENCE:CONDITION_TERMINALE:LIBELLE"
-# CADENCE : DAILY (tous les jours) ou MONTHLY (le 1er du mois).
+# CADENCE : DAILY (=TFJ, tous les jours), WEEKLY (=EOW, le samedi -
+# "apres la fermeture du vendredi"), MONTHLY (=EOM, le 1er du mois -
+# "apres la cloture du mois precedent", meme raisonnement que DAILY qui
+# ouvre a 00:05 pour LE JOUR QUI VIENT DE SE TERMINER), QUARTERLY
+# (=EOQ, le 1er jour d'un nouveau trimestre), YEARLY (=EOY, le 1er
+# janvier). JAMAIS utilise pour JOUR/NRT/EOD/CUTOFF (voir taxonomie
+# plus haut - mecanismes differents, garde horaire interne ou minuteur
+# dedie a heure fixe).
 declare -A CYCLE_WINDOWS=(
-  [EOD_VENTES_WINDOW_OPEN]="DAILY:EOD_VENTES_TERMINE:Ventes - cloture quotidienne (relance devis, nettoyage, rapport)"
+  [TFJ_VENTES_WINDOW_OPEN]="DAILY:TFJ_VENTES_TERMINE:Ventes - cloture quotidienne (relance devis, nettoyage, rapport)"
+  [PURGE_ARC_WINDOW_OPEN]="MONTHLY:PURGE_ARC_TERMINE:Systeme - archivage a froid des fichiers arc/ de plus de 90 jours"
 )
 
 PLAN_FILE="$PLAN_DIR/${TODAY}.csv"
@@ -61,12 +109,33 @@ for WINDOW_COND in "${!CYCLE_WINDOWS[@]}"; do
     DAILY)
       DUE_MARK="$PLAN_DIR/.ouvert_${WINDOW_COND}_${TODAY}"
       ;;
+    WEEKLY)
+      if [ "$TODAY_DOW" != "6" ]; then
+        echo "$TODAY,$WINDOW_COND,$CADENCE,PAS_DU_JOUR,$LIBELLE" >> "$PLAN_FILE"
+        continue
+      fi
+      DUE_MARK="$PLAN_DIR/.ouvert_${WINDOW_COND}_${WEEK_KEY}"
+      ;;
     MONTHLY)
       if [ "$TODAY_DOM" != "01" ]; then
         echo "$TODAY,$WINDOW_COND,$CADENCE,PAS_DU_JOUR,$LIBELLE" >> "$PLAN_FILE"
         continue
       fi
       DUE_MARK="$PLAN_DIR/.ouvert_${WINDOW_COND}_${MONTH_KEY}"
+      ;;
+    QUARTERLY)
+      if [ "$TODAY_DOM" != "01" ] || [[ ! "$TODAY_MONTH" =~ ^(01|04|07|10)$ ]]; then
+        echo "$TODAY,$WINDOW_COND,$CADENCE,PAS_DU_JOUR,$LIBELLE" >> "$PLAN_FILE"
+        continue
+      fi
+      DUE_MARK="$PLAN_DIR/.ouvert_${WINDOW_COND}_${QUARTER_KEY}"
+      ;;
+    YEARLY)
+      if [ "$TODAY_DOM" != "01" ] || [ "$TODAY_MONTH" != "01" ]; then
+        echo "$TODAY,$WINDOW_COND,$CADENCE,PAS_DU_JOUR,$LIBELLE" >> "$PLAN_FILE"
+        continue
+      fi
+      DUE_MARK="$PLAN_DIR/.ouvert_${WINDOW_COND}_${YEAR_KEY}"
       ;;
     *)
       echo "[montee_au_plan] ERREUR : cadence inconnue '$CADENCE' pour $WINDOW_COND (verifier CYCLE_WINDOWS)." >&2
