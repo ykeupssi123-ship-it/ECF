@@ -288,7 +288,37 @@ futur job Tier 1** : avant d'ajouter un job à un dossier `rcv/` déjà
 utilisé par d'autres jobs, vérifier que son en-tête ne collisionne avec
 aucun des en-têtes déjà pris par ce dossier.
 
-L'équivalent pour les 33 autres modules reste à construire, module par
+### Module Ventes — terminé le 4 septembre 2026 (2ᵉ module complet)
+
+3 jobs, tous `OUT_COND=NONE`, tous sur `operations/vt/rcv` :
+
+| JOB_ID | En-tête CSV attendu | Action |
+|---|---|---|
+| `ECFRVTDV` | `quote_ref,partner_name,product_name,quantity` | crée un devis (plusieurs lignes groupées par `quote_ref`) |
+| `ECFRVTCF` | `order_to_confirm` | confirme un devis en commande |
+| `ECFRVTIN` | `order_to_invoice` | crée et valide la facture d'une commande confirmée |
+
+`quote_ref`/`order_to_confirm`/`order_to_invoice` référencent tous le
+champ standard Odoo `client_order_ref` (référence client) — jamais le
+numéro de séquence auto-généré par Odoo (`S00001`...), pour que les 3
+jobs puissent retrouver le même devis/commande de façon stable d'un
+CSV à l'autre.
+
+**Cas d'indépendance limite, tranché explicitement** : `ECFRVTIN`
+(facturation) a besoin, côté Odoo, que le module `account`
+(Comptabilité) soit installé. Volontairement **pas** ajouté en
+`IN_COND` (ce serait `VT` dépendant de `CP`, rejeté par
+`bin/verifier_independance_modules.sh` — exactement le couplage
+WEF-style à éviter). À la place, le job vérifie et échoue clairement
+à l'exécution (`assert account_mod, ...`) si le préalable métier réel
+manque, plutôt qu'une exception Odoo brute — le module Ventes reste
+installable indépendamment, seule cette action précise du pipeline
+échoue si son besoin fonctionnel réel n'est pas rempli. Règle à
+appliquer identiquement pour tout futur job dont une action précise
+nécessite un autre module : jamais un `IN_COND` cross-module, toujours
+une vérification explicite et un échec clair dans le job lui-même.
+
+L'équivalent pour les 32 autres modules reste à construire, module par
 module, sur ce même patron. Voir `jobs_table.csv` pour la liste
 exhaustive à mesure qu'ils sont ajoutés.
 
