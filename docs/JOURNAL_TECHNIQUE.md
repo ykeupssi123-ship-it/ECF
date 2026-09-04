@@ -890,3 +890,42 @@ exactement une fois malgré les 30 passes possibles. Les 4 assertions
 passent. **Ce qui reste à confirmer sur une vraie VM Odoo** (192.168.50.129) :
 le comportement réel sous charge (plusieurs `odoo-bin shell` lancés en
 parallèle), jamais testé ici.
+
+---
+
+## 2026-09-04 (suite) — Bug critique trouvé : 15 outils `bin/` cassés en usage autonome depuis la réorganisation
+
+En préparant la Phase B, `HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"`
+dans **15 scripts `bin/`** (`confirm_job`, `delete_job`, `free_job`,
+`hold_job`, `kill_job`, `monitoring`, `notifier`, `order_job`,
+`rapport_audit`, `require_confirm`, `rerun_job`, `run_now`,
+`set_to_ok`, `undelete_job`, `view_history`) résolvait `$HERE` au
+répertoire `bin/` lui-même — jamais corrigé lors de la réorganisation
+de la racine du 1er septembre, contrairement à `orchestrator.sh` et
+aux deux installateurs `setup/`. Conséquence : `$HERE/vars.conf`,
+`$HERE/lib/commun.sh`, `$HERE/jobs_table.csv`, `$HERE/jobs/...`
+pointaient tous vers des chemins sous `bin/` qui n'existent pas.
+
+**Gravité réelle, pas théorique** : reproduit en réel avant correctif -
+`bash bin/hold_job.sh ECFBTAC "..."` (l'usage NORMAL, autonome, d'un
+opérateur) échouait sur 3 erreurs de chemin en cascade
+(`vars.conf`, `lib/commun.sh`, `jobs_table.csv` tous introuvables sous
+`bin/`), masquées par l'absence de `set -e` jusqu'à un message trompeur
+("ECFBTAC introuvable dans jobs_table.csv") qui ne pointait pas vers la
+vraie cause. Seul `orchestrator.sh` fonctionnait (il exporte
+`VARS_FILE` correctement AVANT que ces scripts ne soient invoqués en
+tant que sous-processus, via des chemins qui, eux, restent corrects) -
+c'est probablement ce qui a caché le bug jusqu'ici : jamais testé en
+usage VRAIMENT autonome, terminal par terminal, comme un opérateur le
+ferait.
+
+**Corrigé** : `HERE` calcule désormais le niveau au-dessus (racine du
+projet) dans les 15 fichiers, plus le seul cas où `$HERE` devait au
+contraire rester relatif à `bin/` (l'appel à `notifier.sh` depuis
+`order_job.sh`, corrigé en `$HERE/bin/notifier.sh`).
+
+**Vérifié en réel, pas juste relu** : `bash -n` sur les 15 fichiers,
+puis reproduction exacte du scénario cassé (`hold_job.sh` sans
+`VARS_FILE` préexporté) - fonctionne, geler/libérer confirmés,
+`monitoring.sh` liste correctement l'état réel. Aucun résidu (état
+sous `state/`, ignoré par Git).
