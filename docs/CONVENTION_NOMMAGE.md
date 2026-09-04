@@ -102,9 +102,10 @@ dans `vars.conf` (source unique de vérité, jamais dupliquée).
 ### Anticipation : nommer le destinataire réel (motif SGABS `SND_BNK`)
 
 `SND_BNK` chez SGABS ne voulait pas dire "envoi" tout court - ça voulait
-dire "envoi **destiné à l'entité BNK**". `$ECFOP/<module>/snd` est
-aujourd'hui générique. Schéma anticipé, jamais construit avant qu'un
-vrai destinataire existe (phase filiale) :
+dire "envoi **destiné à l'entité BNK**" (paire directionnelle nommée,
+ex. `SWFMX/BNK` ↔ `BNK/SWFMX`, un dossier par sens). `$ECFOP/<module>/snd`
+est aujourd'hui générique. Schéma anticipé, jamais construit avant
+qu'un vrai destinataire existe (phase filiale) :
 
 ```
 $ECFOP/<module>/rcv                 # aujourd'hui : reception generique
@@ -112,6 +113,31 @@ $ECFOP/<module>/rcv_<source>        # demain : reception nommee (ex. rcv_portail
 $ECFOP/<module>/snd                 # aujourd'hui : envoi generique
 $ECFOP/<module>/snd_<destinataire>  # demain : envoi nomme (ex. snd_dgi, snd_client)
 ```
+
+### `tmp/` (transit) - ajouté le 4 septembre 2026, construit maintenant, pas anticipé
+
+Différent du point précédent : ceci n'attend pas la phase filiale, un
+vrai principe d'ingénierie s'applique dès aujourd'hui. Chez SGABS,
+`TempM_BNK` était une étape de transit explicite entre
+réception/production et archive (`RCV -> SND_BNK -> Move -> TempM_BNK
+-> Copy -> ARC_BNK`) - jamais un détail cosmétique : un job qui lit
+`snd/` ne doit jamais tomber sur un fichier à moitié écrit par un autre
+job encore en train d'écrire. `ECFBOPD.sh` construit désormais 4
+sous-dossiers par module : `rcv`, `snd`, `tmp`, `arc`. **Discipline
+exigée pour tout futur job d'import/export** : écrire dans `tmp/`,
+puis déplacer (`mv`, atomique sur un même système de fichiers) vers
+`snd/` - jamais écrire directement la destination finale.
+
+### Validation d'en-tête avant traitement - règle pour les futurs jobs d'import
+
+Autre pratique réelle SGABS mentionnée par l'utilisateur : des jobs qui
+lisaient l'en-tête d'un fichier avant de le traiter (routage/validation
+selon le type/la structure détectée), jamais un traitement à l'aveugle.
+Règle retenue pour tout futur job d'import construit sur `$ECFOP`
+(ex. import clients CSV, import employés) : valider que l'en-tête
+(colonnes attendues) correspond au format attendu **avant** de traiter
+la moindre ligne - échouer bruyamment et tôt si l'en-tête ne
+correspond pas, jamais deviner ou tenter un traitement partiel.
 
 **Lien direct avec les futurs jobs (pas qu'une convention passive)** :
 ces dossiers n'existent QUE pour être lus/écrits par de vrais jobs -
