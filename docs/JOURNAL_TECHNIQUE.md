@@ -804,3 +804,21 @@ tôt dans la journée).
   une fois par passe de la boucle multi-passes (jusqu'à 30x sinon).
   Vérifié par un test unitaire isolé des deux fonctions avant d'écrire
   le job. Voir `docs/CONVENTION_NOMMAGE.md`, section Tier 1.
+- **`bin/verifier_independance_modules.sh` ajouté** — rappel explicite
+  de l'utilisateur : ECF ne doit jamais reproduire le couplage
+  WEF (`orchestrator.sh` y fait `exit 1` à la première erreur). Garanti
+  structurellement désormais (pas seulement par l'isolation de panne
+  déjà existante) : vérifié sur les 106 lignes réelles de
+  `jobs_table.csv`, testé avec une fausse dépendance injectée
+  temporairement (`VT`→`CR`), détectée correctement, fichier restauré
+  à l'identique. Modules CRM (5 jobs) et Ventes (3 jobs) terminés sur
+  ce patron dans la foulée — `ECFRVTIN` (facturation) illustre la règle
+  pour un cas limite réel : `account` nécessaire côté Odoo, jamais un
+  `IN_COND` cross-module, vérifié et échoue clairement à l'exécution
+  à la place.
+- **Module Achat terminé** (3 jobs, `ECFRAHPO`/`CF`/`RC`) sur le même
+  patron. `ECFRAHRC` (réception) suit le même principe que
+  `ECFRVTIN` pour sa dépendance à `stock`, mais reste **non vérifié
+  sur une vraie instance Odoo 19** contrairement aux autres jobs Tier 1
+  de cette session (qui réutilisent des patrons déjà exécutés en réel
+  par les jobs d'illustration) — à tester avant exploitation.

@@ -318,7 +318,29 @@ appliquer identiquement pour tout futur job dont une action précise
 nécessite un autre module : jamais un `IN_COND` cross-module, toujours
 une vérification explicite et un échec clair dans le job lui-même.
 
-L'équivalent pour les 32 autres modules reste à construire, module par
+### Module Achat — terminé le 4 septembre 2026 (3ᵉ module complet)
+
+3 jobs, tous `OUT_COND=NONE`, tous sur `operations/ah/rcv`, patron
+identique à Ventes (référence stable via `partner_ref`, jamais le
+numéro de séquence Odoo) :
+
+| JOB_ID | En-tête CSV attendu | Action |
+|---|---|---|
+| `ECFRAHPO` | `po_ref,partner_name,product_name,quantity` | crée une commande fournisseur |
+| `ECFRAHCF` | `po_to_confirm` | confirme une commande fournisseur |
+| `ECFRAHRC` | `po_to_receive` | réceptionne les marchandises (valide le bon de réception) |
+
+Même cas d'indépendance limite que `ECFRVTIN` : `ECFRAHRC` a besoin du
+module `stock` côté Odoo (la réception génère un `stock.picking`),
+volontairement pas ajouté en `IN_COND` — vérifié et échoue clairement
+à l'exécution à la place. **`ECFRAHRC` non encore vérifié sur une
+vraie instance Odoo 19** (contrairement aux autres jobs de ce module,
+qui réutilisent des patrons déjà exécutés en réel dans les jobs
+d'illustration) — `button_validate()` sur un bon de réception suppose
+une réception complète en une fois ; à tester sur une VM réelle avant
+exploitation en production, voir `docs/JOURNAL_TECHNIQUE.md`.
+
+L'équivalent pour les 31 autres modules reste à construire, module par
 module, sur ce même patron. Voir `jobs_table.csv` pour la liste
 exhaustive à mesure qu'ils sont ajoutés.
 

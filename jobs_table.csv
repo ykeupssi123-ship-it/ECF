@@ -41,6 +41,9 @@ ECFBCPAC,ECF_COMPTA_BLD_ACTIVATE,ODOO_HOST,ALWAYS,ECFBCPAC.sh,Activation module 
 ECFBCPDE,ECF_COMPTA_BLD_DEACTIVATE,ODOO_HOST,ALWAYS,ECFBCPDE.sh,Desactivation module account : Facturation et comptabilite de base,COMPTA_ACTIVE,COMPTA_INACTIVE,CP
 ECFBAHAC,ECF_ACHAT_BLD_ACTIVATE,ODOO_HOST,ALWAYS,ECFBAHAC.sh,Activation module purchase : Commandes et appels d offres fournisseurs,ODOO_SYSTEME_PRET,ACHAT_ACTIVE,AH
 ECFBAHDE,ECF_ACHAT_BLD_DEACTIVATE,ODOO_HOST,ALWAYS,ECFBAHDE.sh,Desactivation module purchase : Commandes et appels d offres fournisseurs,ACHAT_ACTIVE,ACHAT_INACTIVE,AH
+ECFRAHPO,ECF_ACHAT_RUN_CREATEPO,ODOO_HOST,ALWAYS,ECFRAHPO.sh,Cree une commande fournisseur (une ou plusieurs lignes) depuis un CSV depose dans operations/ah/rcv (job repetable Tier 1),ACHAT_ACTIVE,NONE,AH
+ECFRAHCF,ECF_ACHAT_RUN_CONFIRMPO,ODOO_HOST,ALWAYS,ECFRAHCF.sh,Confirme une commande fournisseur existante depuis un CSV depose dans operations/ah/rcv (job repetable Tier 1),ACHAT_ACTIVE,NONE,AH
+ECFRAHRC,ECF_ACHAT_RUN_RECEIVE,ODOO_HOST,ALWAYS,ECFRAHRC.sh,Receptionne les marchandises d une commande confirmee depuis un CSV depose dans operations/ah/rcv (job repetable Tier 1),ACHAT_ACTIVE,NONE,AH
 ECFBTAC,ECF_STOCK_BLD_ACTIVATE,ODOO_HOST,ALWAYS,ECFBTAC.sh,Activation module stock : Gestion des stocks et logistique,ODOO_SYSTEME_PRET,STOCK_ACTIVE,ST
 ECFBTDE,ECF_STOCK_BLD_DEACTIVATE,ODOO_HOST,ALWAYS,ECFBTDE.sh,Desactivation module stock : Gestion des stocks et logistique,STOCK_ACTIVE,STOCK_INACTIVE,ST
 ECFBMRAC,ECF_MRP_BLD_ACTIVATE,ODOO_HOST,ALWAYS,ECFBMRAC.sh,Activation module mrp : Ordres de fabrication et nomenclatures,ODOO_SYSTEME_PRET,MRP_ACTIVE,MR
