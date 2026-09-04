@@ -17,8 +17,8 @@ ECFBCDB,ECF_SYS_BLD_CREATEDB,ODOO_HOST,ALWAYS,ECFBCDB.sh,Creation de la base du 
 ECFBNGX,ECF_SYS_BLD_NGINX,ODOO_HOST,ALWAYS,ECFBNGX.sh,Reverse-proxy HTTPS devant Odoo,ODOO_SYSTEM_INSTALLED,ODOO_NGINX_OK,SYS
 ECFBSMT,ECF_SYS_BLD_SMTP,ODOO_HOST,ALWAYS,ECFBSMT.sh,Relais SMTP sortant local (Postfix),ODOO_NGINX_OK,ODOO_SMTP_OK,SYS
 ECFBDNS,ECF_SYS_BLD_DNSZONE,ODOO_HOST,ALWAYS,ECFBDNS.sh,Resolution interne pour l'URL de demo,ODOO_SMTP_OK,ODOO_DNS_OK,SYS
-ECFBBCK,ECF_SYS_BLD_BACKUP,ODOO_HOST,ALWAYS,ECFBBCK.sh,Sauvegarde quotidienne (base + filestore),ODOO_DNS_OK,ODOO_BACKUP_OK,SYS
-ECFRVER,ECF_SYS_RUN_SYSTEMVERIFY,ODOO_HOST,ALWAYS,ECFRVER.sh,Verification finale de bout en bout (comme un vrai client),ODOO_BACKUP_OK,ODOO_SYSTEME_PRET,SYS
+ECFBBCK,ECF_SYS_BLD_BACKUP,ODOO_HOST,ALWAYS,ECFBBCK.sh,Sauvegarde quotidienne (base + filestore) - dernier prealable technique reel,ODOO_DNS_OK,ODOO_SYSTEME_PRET,SYS
+ECFRVER,ECF_SYS_RUN_SYSTEMVERIFY,ODOO_HOST,ALWAYS,ECFRVER.sh,Verification finale de bout en bout (comme un vrai client) - tourne en parallele des modules jamais avant eux,ODOO_SYSTEME_PRET,ODOO_VERIFICATION_OK,SYS
 ECFBCTAC,ECF_CONTACTS_BLD_ACTIVATE,ODOO_HOST,ALWAYS,ECFBCTAC.sh,Activation module contacts : repertoire des contacts (clients fournisseurs partenaires),ODOO_SYSTEME_PRET,CONTACTS_ACTIVE,CT
 ECFBCTDE,ECF_CONTACTS_BLD_DEACTIVATE,ODOO_HOST,ALWAYS,ECFBCTDE.sh,Desactivation module contacts : repertoire des contacts (clients fournisseurs partenaires),CONTACTS_ACTIVE,CONTACTS_INACTIVE,CT
 ECFBCLAC,ECF_CALENDRIER_BLD_ACTIVATE,ODOO_HOST,ALWAYS,ECFBCLAC.sh,Activation module calendar : Agenda partage et rendez-vous,ODOO_SYSTEME_PRET,CALENDRIER_ACTIVE,CL

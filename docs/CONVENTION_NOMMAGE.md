@@ -374,3 +374,32 @@ volontairement exemptées de cette règle (documenté, jamais une
 Testé en réel (une fausse dépendance injectée temporairement entre
 `VT` et `CR`, détectée avec le détail exact, puis le fichier restauré
 à l'identique) avant d'être documenté ici.
+
+## Moteur d'exécution : parallélisme réel par vagues (ajouté le 4 septembre 2026)
+
+L'indépendance structurelle ci-dessus ne suffisait pas seule : jusqu'à
+cette date, `orchestrator.sh` restait **strictement séquentiel** — un
+job lancé en arrière-plan était immédiatement attendu avant de passer
+au suivant, même entre modules déjà prouvés indépendants. Corrigé :
+chaque passe de la boucle multi-passes lance désormais **tous** les
+jobs prêts de cette passe en parallèle (fonction `run_job_async`),
+plafonnés par `MAX_PARALLEL_JOBS` (`vars.conf`, 6 par défaut) — motif
+bash "pool" (`wait -n` libère un emplacement individuel, jamais le lot
+entier). `ECFRVER` (vérification finale) a été déplacé en parallèle
+des 34 modules pour la même raison : un job de test/fiabilité ne doit
+jamais bloquer la suite.
+
+Conséquence structurelle assumée : un sous-shell en arrière-plan ne
+peut pas modifier une variable du processus parent. `FAILED_SERVICES`
+et `RAN_THIS_RUN` (ajoutés le matin même comme tableaux associatifs)
+sont devenus des répertoires sur disque
+(`state/run_tmp/failed_services/`, `state/run_tmp/ran_this_run/`).
+Vérifié par un harnais de simulation isolé (jobs `sleep`/`counter`
+factices, jamais commité) avant d'être considéré fiable : démarrage
+simultané prouvé, libération d'UN SEUL emplacement (pas du lot entier)
+prouvée avec des durées volontairement asymétriques, isolation de
+panne par service toujours vraie, job `OUT_COND=NONE` toujours exécuté
+une seule fois par lancement malgré les 30 passes possibles. Voir
+`docs/JOURNAL_TECHNIQUE.md` pour le détail complet et ce qui reste à
+confirmer sur une vraie VM Odoo (comportement sous charge réelle,
+jamais testé depuis cet environnement).

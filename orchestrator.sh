@@ -105,30 +105,53 @@ RUNNING_DIR="$STATE_DIR/RUNNING"
 mkdir -p "$RUNNING_DIR"
 ORCH_MARK="$RUNNING_DIR/_ORCHESTRATEUR.running"
 echo "$(date -Iseconds),$$" > "$ORCH_MARK"
-cleanup_running(){ rm -f "$ORCH_MARK" "${CURRENT_JOB_MARK:-/dev/null}" 2>/dev/null || true; }
+# CORRIGE LE 2026-09-04 (avec le passage au parallelisme reel) : avant,
+# au plus UN job tournait a la fois, son marqueur .running vivait dans
+# une variable du processus PARENT ($CURRENT_JOB_MARK). Desormais
+# PLUSIEURS jobs tournent en meme temps, chacun dans son propre
+# sous-shell (voir run_job_async) - le parent n'a plus aucune variable
+# unique a nettoyer. Balayage de TOUT $RUNNING_DIR/*.running a la
+# place : sans risque, un marqueur encore present a ce stade (sortie de
+# l'orchestrateur, normale ou interrompue) est par definition perime -
+# bin/monitoring.sh verifie de toute facon le PID reel avant d'afficher
+# quoi que ce soit comme "en cours" (voir plus haut).
+cleanup_running(){ rm -f "$ORCH_MARK" "$RUNNING_DIR"/*.running 2>/dev/null || true; }
 
 log(){ echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$RUN_LOG"; }
 mkdir -p "$STATE_DIR/HELD"
 
-# FAILED_SERVICES : associatif, un service (colonne SERVICE) une fois
-# present ici ne verra plus jamais aucun de ses jobs tentes pour le
-# reste de ce run (voir isolation de panne par service, en-tete
-# ci-dessus). FAILED_JOBS_LOG : liste texte (une ligne par job en
-# echec) pour le rapport final - plusieurs services independants
-# peuvent echouer dans le MEME run, jamais suppose un seul.
-declare -A FAILED_SERVICES=()
-FAILED_JOBS_LOG=""
+# PARALLELISME REEL PAR VAGUES (ajoute le 2026-09-04, demande explicite
+# utilisateur - capture d'ecran Control-M reelle montrant plusieurs
+# chaines de jobs actives simultanement). AVANT : la boucle principale
+# lancait un job en arriere-plan uniquement pour recuperer son PID, puis
+# l'attendait IMMEDIATEMENT (wait) avant de passer a la ligne suivante -
+# strictement sequentiel, meme entre services deja prouves independants
+# (bin/verifier_independance_modules.sh). MAINTENANT : chaque passe lance
+# TOUS les jobs prets de cette passe en parallele (voir run_job_async
+# plus bas et la boucle principale), plafonnes a MAX_PARALLEL_JOBS
+# (vars.conf) simultanes.
+#
+# CONSEQUENCE STRUCTURELLE : un sous-shell lance en arriere-plan (&) ne
+# peut PAS modifier les variables du processus PARENT (contrairement a
+# l'ancien code, ou le "wait" synchrone gardait tout dans le MEME
+# processus). FAILED_SERVICES et RAN_THIS_RUN, auparavant des tableaux
+# associatifs en memoire, deviennent donc des repertoires sur disque -
+# le seul mecanisme qui survit a la frontiere du sous-shell. Purges (rm
+# -rf puis mkdir) au DEBUT de chaque run pour repartir d'un etat propre,
+# jamais purges a la fin (utile pour inspecter apres coup en cas de
+# question sur un run precedent).
+RUN_TMP_DIR="$STATE_DIR/run_tmp"
+FAILED_SERVICES_DIR="$RUN_TMP_DIR/failed_services"
+RAN_THIS_RUN_DIR="$RUN_TMP_DIR/ran_this_run"
+FAILED_JOBS_LOG_FILE="$RUN_TMP_DIR/failed_jobs_log.txt"
+rm -rf "$RUN_TMP_DIR"
+mkdir -p "$FAILED_SERVICES_DIR" "$RAN_THIS_RUN_DIR"
+: > "$FAILED_JOBS_LOG_FILE"
 
-# RAN_THIS_RUN (ajoute le 2026-09-04, avec le support OUT_COND=NONE dans
-# lib/commun.sh) : un job OUT_COND=NONE ne pose jamais de jalon permanent
-# (job_done() renvoie toujours faux pour lui) - sans ce garde-fou, il
-# serait retente a CHAQUE passe de la boucle multi-passes ci-dessous
-# (jusqu'a 30x dans la MEME execution de l'orchestrateur), au lieu d'une
-# fois par lancement comme un vrai job EOD/EOM/TFJ Control-M. Ne
-# s'applique qu'aux jobs OUT_COND=NONE - les jobs BLD/Tier 0 classiques
-# restent geres par leur jalon .ok habituel, jamais concerne par cette
-# table.
-declare -A RAN_THIS_RUN=()
+# Plafond de jobs simultanes au sein d'une meme vague - une VM de demo
+# ne doit pas se retrouver avec 40 "odoo-bin shell" lances a l'identique.
+# Valeur par defaut si absente de vars.conf (retro-compatibilite).
+MAX_PARALLEL_JOBS="${MAX_PARALLEL_JOBS:-6}"
 
 # Ecrit le rapport final, quelle que soit l'issue (succes, echec, Ctrl+C).
 write_report() {
@@ -142,12 +165,13 @@ write_report() {
     [ "$ROLE" = "AGENT_HOST" ] && echo "Composants  : ${AGENT_COMPONENTS:-(aucun)}"
     echo "Log complet : $RUN_LOG"
     echo ""
-    if [ ${#FAILED_SERVICES[@]} -gt 0 ]; then
-      echo "RESULTAT : ${#FAILED_SERVICES[@]} SERVICE(S) EN ECHEC (les autres services independants ont ete tentes jusqu'au bout - voir isolation de panne par service, en-tete du script)"
-      echo "Services en echec : ${!FAILED_SERVICES[*]}"
+    FAILED_COUNT="$(find "$FAILED_SERVICES_DIR" -type f 2>/dev/null | wc -l)"
+    if [ "$FAILED_COUNT" -gt 0 ]; then
+      echo "RESULTAT : ${FAILED_COUNT} SERVICE(S) EN ECHEC (les autres services independants ont ete tentes jusqu'au bout - voir isolation de panne par service, en-tete du script)"
+      echo "Services en echec : $(ls "$FAILED_SERVICES_DIR" 2>/dev/null | tr '\n' ' ')"
       echo ""
       echo "--- Jobs en echec ---"
-      printf '%b' "$FAILED_JOBS_LOG"
+      cat "$FAILED_JOBS_LOG_FILE" 2>/dev/null
     else
       echo "RESULTAT : TERMINE SANS ECHEC (tous les jobs prets pour ce ROLE/composants ont ete rejoues jusqu'a stabilisation)"
     fi
@@ -172,7 +196,7 @@ write_report() {
       # atteint" n'a pas de sens pour un job sans jalon permanent - ne
       # figure ici que s'il n'a pas tourne DANS CETTE execution.
       if [ "$OUT_COND" = "NONE" ]; then
-        [ -n "${RAN_THIS_RUN[$JOB_ID]:-}" ] && continue
+        [ -f "$RAN_THIS_RUN_DIR/$JOB_ID" ] && continue
         echo "$JOB_ID ($JOB_NAME)"
         NOT_REACHED=1
         continue
@@ -204,7 +228,84 @@ if [ "$ROLE" = "AGENT_HOST" ]; then
   fi
 fi
 
+# run_job_async() : unite d'execution AUTO-SUFFISANTE pour un job reel
+# (jamais utilisee pour SAUTE_CONFIG, gere ailleurs de facon synchrone
+# et quasi instantanee - inutile de la paralleliser). Concue pour
+# tourner DANS un sous-shell (appelee avec "&") : fait tout ce que
+# l'ancien code faisait juste apres son "wait" synchrone - execution,
+# log dedie, marquage .ok, ligne HISTORY_LEDGER, notification d'echec -
+# entierement a partir de ses propres arguments et de fichiers sur
+# disque, jamais une variable du parent qui ne survivrait pas a la
+# frontiere du sous-shell.
+#
+# SEULE CHOSE VOLONTAIREMENT ABANDONNEE ICI par rapport a l'ancien code :
+# le "cat $JOB_LOG >> $RUN_LOG" qui recopiait la sortie complete du job
+# dans le log combine de l'orchestrateur. Sous vraie concurrence,
+# plusieurs sous-shells ecrivant simultanement un CONTENU MULTI-LIGNES
+# dans le MEME fichier ("cat ... >>") ne sont PAS garantis atomiques
+# (contrairement a une ligne UNIQUE de HISTORY_LEDGER, protegee par
+# PIPE_BUF) - risque reel d'entrelacement/corruption du log combine.
+# Le log dedie a CETTE execution (JOB_LOG, sous HISTORY_DIR/<JOB_ID>/)
+# reste la source complete et fiable, deja consultable via
+# ./bin/view_history.sh - $RUN_LOG garde seulement les lignes de statut
+# courtes (deja ecrites via log(), elles, sures sous PIPE_BUF).
+run_job_async() {
+  local JOB_ID="$1" JOB_NAME="$2" SCRIPT_FILE="$3" DESC="$4" OUT_COND="$5" SERVICE="$6"
+  local SCRIPT_PATH="$SCRIPT_DIR/jobs/$SCRIPT_FILE"
+
+  check_dev_null
+  log "--- $JOB_ID ($JOB_NAME) : $DESC ---"
+  local JOB_TS
+  JOB_TS=$(date +%Y%m%d_%H%M%S_%N)
+  mkdir -p "$HISTORY_DIR/$JOB_ID"
+  local JOB_LOG="$HISTORY_DIR/$JOB_ID/${JOB_TS}.log"
+  local JOB_PATHS_FILE="$HISTORY_DIR/$JOB_ID/${JOB_TS}.paths"
+  export ECF_JOB_PATHS_FILE="$JOB_PATHS_FILE"
+
+  # Meme correctif "< /dev/null" que l'ancien code (incident reel
+  # ERP_CRM_FACTORY, 2026-09-01) : ici chaque job a de toute facon son
+  # propre sous-shell, mais le "< /dev/null" reste necessaire pour la
+  # meme raison (empecher un job de voler un octet sur un descripteur
+  # partage, par prudence).
+  local JOB_START_EPOCH
+  JOB_START_EPOCH=$(date +%s)
+  bash "$SCRIPT_PATH" > "$JOB_LOG" 2>&1 < /dev/null &
+  local JOB_PID=$!
+  local CURRENT_JOB_MARK="$RUNNING_DIR/${JOB_ID}.running"
+  echo "$(date -Iseconds),$JOB_PID,$JOB_NAME" > "$CURRENT_JOB_MARK"
+  wait "$JOB_PID"
+  local JOB_EXIT=$?
+  rm -f "$CURRENT_JOB_MARK"
+
+  local JOB_DURATION_SEC=$(( $(date +%s) - JOB_START_EPOCH ))
+  local PATH_TOUCHED=""
+  if [ -s "$JOB_PATHS_FILE" ]; then
+    PATH_TOUCHED="$(paste -sd';' "$JOB_PATHS_FILE")"
+  fi
+
+  if [ $JOB_EXIT -eq 0 ]; then
+    mark_done "$OUT_COND"
+    echo "$(date -Iseconds),$JOB_ID,$JOB_NAME,OK,$JOB_LOG,$JOB_DURATION_SEC,$PATH_TOUCHED" >> "$HISTORY_LEDGER"
+    log "$JOB_ID -> OK ($OUT_COND) [historique: ./bin/view_history.sh $JOB_ID]"
+  else
+    echo "$(date -Iseconds),$JOB_ID,$JOB_NAME,ECHEC,$JOB_LOG,$JOB_DURATION_SEC,$PATH_TOUCHED" >> "$HISTORY_LEDGER"
+    local SVC_LABEL="${SERVICE:-(aucun)}"
+    log "$JOB_ID -> ECHEC (service '$SVC_LABEL'). Voir $JOB_LOG (ou ./bin/view_history.sh $JOB_ID). Ce service s'arrete, les autres services independants continuent."
+    if [ -n "${SERVICE:-}" ]; then
+      touch "$FAILED_SERVICES_DIR/$SERVICE"
+    fi
+    echo "${JOB_ID} (${JOB_NAME}, service ${SVC_LABEL}) - voir ${JOB_LOG}" >> "$FAILED_JOBS_LOG_FILE"
+    # Alerte email (bin/notifier.sh, ajoute le 2026-08-12) - ne bloque et
+    # ne casse JAMAIS l'orchestrateur, meme si l'envoi echoue ou si
+    # NOTIF_ENABLED n'est pas configure.
+    if [ -x "$SCRIPT_DIR/bin/notifier.sh" ]; then
+      "$SCRIPT_DIR/bin/notifier.sh" "$JOB_ID" "$JOB_NAME" "ECHEC" "$JOB_LOG" >> "$RUN_LOG" 2>&1 || true
+    fi
+  fi
+}
+
 MAX_PASSES=30
+RUNNING_COUNT=0
 for pass in $(seq 1 $MAX_PASSES); do
   progressed=0
   while IFS=',' read -r JOB_ID JOB_NAME JOB_ROLE COMPONENT SCRIPT_FILE DESC IN_COND OUT_COND SERVICE; do
@@ -215,7 +316,7 @@ for pass in $(seq 1 $MAX_PASSES); do
       component_enabled "$COMPONENT" || continue
     fi
     job_done "$OUT_COND" && continue
-    if [ "$OUT_COND" = "NONE" ] && [ -n "${RAN_THIS_RUN[$JOB_ID]:-}" ]; then
+    if [ "$OUT_COND" = "NONE" ] && [ -f "$RAN_THIS_RUN_DIR/$JOB_ID" ]; then
       continue
     fi
 
@@ -233,7 +334,7 @@ for pass in $(seq 1 $MAX_PASSES); do
     # meme run - jamais tente (pas de suite possible sur une base
     # cassee au sein du MEME service), mais ne bloque JAMAIS les autres
     # services independants qui continuent normalement.
-    if [ -n "${SERVICE:-}" ] && [ -n "${FAILED_SERVICES[$SERVICE]:-}" ]; then
+    if [ -n "${SERVICE:-}" ] && [ -f "$FAILED_SERVICES_DIR/$SERVICE" ]; then
       log "$JOB_ID -> SAUTE (service '$SERVICE' deja en echec dans ce run)"
       continue
     fi
@@ -299,94 +400,32 @@ for pass in $(seq 1 $MAX_PASSES); do
       continue
     fi
 
-    # Verification/auto-guerison /dev/null (voir lib/commun.sh) - avant
-    # CHAQUE job, cout negligeable, filet de securite contre l'incident
-    # reel du 2026-08-14 (SSH devenu inaccessible en cours de deploiement
-    # a cause de /dev/null corrompu, sans lien avec le job en cours).
-    check_dev_null
-
-    log "--- $JOB_ID ($JOB_NAME) : $DESC ---"
-    JOB_TS=$(date +%Y%m%d_%H%M%S_%N)
-    mkdir -p "$HISTORY_DIR/$JOB_ID"
-    JOB_LOG="$HISTORY_DIR/$JOB_ID/${JOB_TS}.log"
-    # PATH_TOUCHED (ajoute le 2026-09-04) : contrat simple, opt-in - un job
-    # qui lit/ecrit sous $ECFOP peut declarer le(s) chemin(s) exact(s)
-    # touches en les ecrivant (un par ligne) dans $ECF_JOB_PATHS_FILE. Rien
-    # n'oblige un job a le faire ; la plupart n'ont rien a y ecrire.
-    JOB_PATHS_FILE="$HISTORY_DIR/$JOB_ID/${JOB_TS}.paths"
-    export ECF_JOB_PATHS_FILE="$JOB_PATHS_FILE"
-
-    # Lance en arriere-plan uniquement pour recuperer le PID reel du
-    # job (necessaire pour que bin/monitoring.sh puisse verifier si un
-    # marqueur EN_COURS est encore vivant) - orchestrator.sh reste
-    # sequentiel : le "wait" juste apres bloque jusqu'a la fin du job,
-    # exactement comme un appel synchrone.
-    # CORRIGE LE 2026-09-01 (incident reel ERP_CRM_FACTORY) : sans
-    # "< /dev/null", le job herite du MEME descripteur stdin que la
-    # boucle "while read ... done < \"$JOBS_CSV\"" qui lit ce fichier
-    # jobs_table.csv ligne par ligne - si le job (ou un sous-processus
-    # qu'il lance, ex. dnf sur une invite d'import de cle GPG non
-    # supprimee par -y) lit ne serait-ce qu'un seul octet sur stdin, cet
-    # octet est vole DIRECTEMENT dans le flux du CSV en cours de lecture
-    # par le parent, decalant silencieusement la position de lecture
-    # pour toutes les lignes suivantes. Constate en reel : le job
-    # ODOO_002_SYSTEM_USER a ete lu comme "OO_002_SYSTEM_USER" (le "D"
-    # initial vole par un octet consomme pendant ODOO_001_OS_UPDATE,
-    # dnf update -y sur un depot nouvellement ajoute, epel-release).
-    # Jamais un probleme cote donnees (jobs_table.csv lui-meme verifie
-    # intact sur le disque) - uniquement un partage de descripteur non
-    # isole entre le job et la boucle qui le pilote.
-    [ "$OUT_COND" = "NONE" ] && RAN_THIS_RUN["$JOB_ID"]=1
-    JOB_START_EPOCH=$(date +%s)
-    bash "$SCRIPT_PATH" > "$JOB_LOG" 2>&1 < /dev/null &
-    JOB_PID=$!
-    CURRENT_JOB_MARK="$RUNNING_DIR/${JOB_ID}.running"
-    echo "$(date -Iseconds),$JOB_PID,$JOB_NAME" > "$CURRENT_JOB_MARK"
-    wait "$JOB_PID"
-    JOB_EXIT=$?
-    rm -f "$CURRENT_JOB_MARK"
-    CURRENT_JOB_MARK=""
-    # DUREE_SEC (ajoute le 2026-08-12) : necessaire a bin/monitoring.sh
-    # pour detecter un job EN COURS anormalement long par rapport a sa
-    # moyenne historique (SLA/retard) - directement motive par
-    # l'incident reel ES_027 (timeout de 5 min decouvert seulement une
-    # fois termine, aucune alerte pendant qu'il tournait).
-    JOB_DURATION_SEC=$(( $(date +%s) - JOB_START_EPOCH ))
-    cat "$JOB_LOG" >> "$RUN_LOG"
-    # Chemin(s) declares par le job (voir JOB_PATHS_FILE ci-dessus) - joints
-    # par ";" (jamais une virgule, qui casserait le parsing positionnel du
-    # CSV). Vide si le job n'a rien declare (cas normal aujourd'hui).
-    PATH_TOUCHED=""
-    if [ -s "$JOB_PATHS_FILE" ]; then
-      PATH_TOUCHED="$(paste -sd';' "$JOB_PATHS_FILE")"
+    # LANCEMENT PAR VAGUES (voir run_job_async ci-dessus et l'en-tete
+    # PARALLELISME REEL) : ce job est pret, il part MAINTENANT en
+    # arriere-plan, sans attendre sa fin - d'autres jobs de services
+    # differents, prets dans cette MEME passe, partiront juste apres,
+    # simultanement. Marquage RAN_THIS_RUN AVANT le lancement (comme
+    # avant) : ecrit ici dans le processus PARENT (jamais dans le
+    # sous-shell), aucune course possible avec une passe suivante.
+    [ "$OUT_COND" = "NONE" ] && touch "$RAN_THIS_RUN_DIR/$JOB_ID"
+    run_job_async "$JOB_ID" "$JOB_NAME" "$SCRIPT_FILE" "$DESC" "$OUT_COND" "$SERVICE" &
+    RUNNING_COUNT=$((RUNNING_COUNT + 1))
+    # Plafond de parallelisme (MAX_PARALLEL_JOBS, vars.conf) : motif
+    # bash classique "pool" - des qu'on atteint le plafond, on attend
+    # qu'UN SEUL job (n'importe lequel) libere un emplacement avant de
+    # continuer a lancer les suivants de cette meme passe.
+    if [ "$RUNNING_COUNT" -ge "$MAX_PARALLEL_JOBS" ]; then
+      wait -n
+      RUNNING_COUNT=$((RUNNING_COUNT - 1))
     fi
-    if [ $JOB_EXIT -eq 0 ]; then
-      mark_done "$OUT_COND"
-      echo "$(date -Iseconds),$JOB_ID,$JOB_NAME,OK,$JOB_LOG,$JOB_DURATION_SEC,$PATH_TOUCHED" >> "$HISTORY_LEDGER"
-      log "$JOB_ID -> OK ($OUT_COND) [historique: ./bin/view_history.sh $JOB_ID]"
-      progressed=1
-    else
-      echo "$(date -Iseconds),$JOB_ID,$JOB_NAME,ECHEC,$JOB_LOG,$JOB_DURATION_SEC,$PATH_TOUCHED" >> "$HISTORY_LEDGER"
-      SVC_LABEL="${SERVICE:-(aucun)}"
-      log "$JOB_ID -> ECHEC (service '$SVC_LABEL'). Voir $JOB_LOG (ou $RUN_LOG). Ce service s'arrete, les autres services independants continuent."
-      if [ -n "${SERVICE:-}" ]; then
-        FAILED_SERVICES["$SERVICE"]=1
-      fi
-      FAILED_JOBS_LOG="${FAILED_JOBS_LOG}${JOB_ID} (${JOB_NAME}, service ${SVC_LABEL}) - voir ${JOB_LOG}\n"
-      # Alerte email (bin/notifier.sh, ajoute le 2026-08-12) - ne bloque et
-      # ne casse JAMAIS l'orchestrateur, meme si l'envoi echoue ou si
-      # NOTIF_ENABLED n'est pas configure.
-      if [ -x "$SCRIPT_DIR/bin/notifier.sh" ]; then
-        "$SCRIPT_DIR/bin/notifier.sh" "$JOB_ID" "$JOB_NAME" "ECHEC" "$JOB_LOG" >> "$RUN_LOG" 2>&1 || true
-      fi
-      # "progressed" reste a 0 ici (volontaire) : un job en ECHEC ne
-      # marque jamais son OUT_COND, donc ne debloque rien de nouveau -
-      # ce n'est pas une "progression" au sens du point fixe de la
-      # boucle de passes. Si TOUS les jobs restants d'une passe sont des
-      # echecs (ou des blocages permanents), la boucle "for pass" doit
-      # s'arreter normalement plutot que de rejouer 30 passes inutiles.
-    fi
+    progressed=1
   done < "$JOBS_CSV"
+  # Attend TOUS les jobs de CETTE passe (au-dela du plafond deja
+  # attendus ci-dessus) avant d'evaluer la passe suivante - une passe
+  # ne peut jamais chevaucher la suivante, exactement comme une vague
+  # Control-M se termine avant que la suivante soit evaluee.
+  wait
+  RUNNING_COUNT=0
   [ $progressed -eq 0 ] && break
 done
 
@@ -394,8 +433,9 @@ log "=== Fin orchestrateur ==="
 log "Etat final (jobs termines) :"
 ls "$STATE_DIR" 2>/dev/null | grep '\.ok$' | tee -a "$RUN_LOG"
 
-if [ ${#FAILED_SERVICES[@]} -gt 0 ]; then
-  log "=== ${#FAILED_SERVICES[@]} service(s) en echec : ${!FAILED_SERVICES[*]} (les autres services independants ont ete tentes jusqu'au bout) ==="
+FAILED_COUNT="$(find "$FAILED_SERVICES_DIR" -type f 2>/dev/null | wc -l)"
+if [ "$FAILED_COUNT" -gt 0 ]; then
+  log "=== ${FAILED_COUNT} service(s) en echec : $(ls "$FAILED_SERVICES_DIR" 2>/dev/null | tr '\n' ' ') (les autres services independants ont ete tentes jusqu'au bout) ==="
   exit 1
 fi
 exit 0

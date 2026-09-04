@@ -822,3 +822,71 @@ tôt dans la journée).
   sur une vraie instance Odoo 19** contrairement aux autres jobs Tier 1
   de cette session (qui réutilisent des patrons déjà exécutés en réel
   par les jobs d'illustration) — à tester avant exploitation.
+
+---
+
+## 2026-09-04 (suite) — Parallélisme réel par vagues (Phase A), déblocage d'`ECFRVER`
+
+Demande explicite utilisateur (capture d'écran Control-M réelle,
+plusieurs chaînes de jobs actives simultanément) : ECF ne doit jamais
+reproduire le couplage WEF, y compris entre jobs déjà prouvés
+indépendants. Vérifié avant de commencer : la boucle principale
+d'`orchestrator.sh` lançait chaque job en arrière-plan puis
+l'attendait **immédiatement** — strictement séquentielle, malgré
+l'isolation de panne par service déjà en place. Et `ECFRVER`
+(vérification finale) se trouvait sur le chemin critique avant
+`ODOO_SYSTEME_PRET`, bloquant les 40 jobs qui en dépendent — exemple
+donné par l'utilisateur la veille : un test de fiabilité ne doit jamais
+bloquer la suite.
+
+**Changements** (voir le plan approuvé,
+`C:\Users\HP PROBOOK\.claude\plans\curious-sprouting-diffie.md`) :
+
+- `orchestrator.sh` lance désormais **tous** les jobs prêts d'une même
+  passe en parallèle (fonction `run_job_async`, appelée en arrière-plan
+  par job), plafonnés par `MAX_PARALLEL_JOBS` (`vars.conf`, 6 par
+  défaut) via le motif bash classique "pool" (`wait -n` libère un
+  emplacement à la fois, jamais le lot entier).
+- `FAILED_SERVICES` et `RAN_THIS_RUN` (tableaux associatifs en mémoire,
+  ajoutés le matin même) sont devenus des **répertoires sur disque**
+  (`state/run_tmp/failed_services/`, `state/run_tmp/ran_this_run/`) -
+  un sous-shell en arrière-plan ne peut pas modifier une variable du
+  processus parent, seul un fichier survit à cette frontière. Purgés au
+  début de chaque run, jamais à la fin (utile pour inspecter après
+  coup).
+- Le `cat $JOB_LOG >> $RUN_LOG` (recopie de la sortie complète dans le
+  log combiné) a été retiré : sous vraie concurrence, plusieurs
+  sous-shells écrivant un contenu multi-lignes dans le même fichier ne
+  sont pas garantis atomiques (contrairement à une ligne unique de
+  `HISTORY_LEDGER`, protégée par `PIPE_BUF`) - le log dédié à chaque
+  exécution (déjà consultable via `./bin/view_history.sh`) reste la
+  source complète.
+- `cleanup_running()` (trap de sortie) balaie désormais tout
+  `RUNNING_DIR/*.running` au lieu d'un unique marqueur en variable -
+  plusieurs jobs peuvent être "en cours" en même temps désormais.
+- `ECFRVER` : `ODOO_SYSTEME_PRET` est maintenant produit directement
+  par `ECFBBCK` (dernier vrai prérequis technique) au lieu d'`ECFRVER`.
+  `ECFRVER` tourne désormais EN PARALLÈLE des 34 modules
+  (`IN_COND=ODOO_SYSTEME_PRET`, comme eux) et produit
+  `ODOO_VERIFICATION_OK`, que rien d'autre ne consomme - un rapport
+  consultable, plus un verrou.
+- **Bug trouvé au passage en relisant `vars.conf`** : `SKIP_JOBS`
+  référençait encore `ODOO_001_OS_UPDATE`, le `JOB_ID` d'avant la
+  refonte complète du schéma de nommage - plus aucun job ne portait ce
+  nom depuis, `SKIP_JOBS` ne sautait donc plus rien du tout,
+  silencieusement. Corrigé (`ECFBOSU`).
+
+**Vérification réelle faite ici** (impossible de tester contre une
+vraie instance Odoo depuis cet environnement) : harnais de simulation
+isolé (`scratchpad/orch_sim/`, jamais commité, jobs `sleep`/`counter`
+factices à la place de vrais scripts Odoo) prouvant, à travers la
+frontière des sous-shells : (a) deux jobs de services différents
+démarrent bien à moins de 0,5s d'écart l'un de l'autre, (b) le plafond
+`MAX_PARALLEL_JOBS=2` libère bien un emplacement individuel dès qu'UN
+SEUL job finit (job de 1s testé aux côtés d'un job de 5s - le suivant
+démarre à ~1s, jamais à ~5s), (c) un service en échec n'empêche pas un
+service indépendant de réussir, (d) un job `OUT_COND=NONE` s'exécute
+exactement une fois malgré les 30 passes possibles. Les 4 assertions
+passent. **Ce qui reste à confirmer sur une vraie VM Odoo** (192.168.50.129) :
+le comportement réel sous charge (plusieurs `odoo-bin shell` lancés en
+parallèle), jamais testé ici.
