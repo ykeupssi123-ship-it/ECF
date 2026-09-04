@@ -97,6 +97,13 @@ YEAR_KEY="$(date +%Y)"
 declare -A CYCLE_WINDOWS=(
   [TFJ_VENTES_WINDOW_OPEN]="DAILY:TFJ_VENTES_TERMINE:Ventes - cloture quotidienne (relance devis, nettoyage, rapport)"
   [PURGE_ARC_WINDOW_OPEN]="MONTHLY:PURGE_ARC_TERMINE:Systeme - archivage a froid des fichiers arc/ de plus de 90 jours"
+  # Ajoutes le 2026-09-04 (chantier "anticipation" demande par l'utilisateur -
+  # construction des operations HAUTE priorite du catalogue avec leurs
+  # dependances et leur calendrier reel) :
+  [TFJ_COMPTA_WINDOW_OPEN]="DAILY:TFJ_COMPTA_TERMINE:Comptabilite - cloture quotidienne (reconciliation bancaire, relance factures impayees)"
+  [COMPTA_EOM_WINDOW_OPEN]="MONTHLY:COMPTA_EOM_TERMINE:Comptabilite - cloture comptable mensuelle"
+  [COMPTA_EOQ_WINDOW_OPEN]="QUARTERLY:COMPTA_EOQ_TERMINE:Comptabilite - declaration TVA trimestrielle"
+  [VENTES_EOM_WINDOW_OPEN]="MONTHLY:VENTES_EOM_TERMINE:Ventes - cloture commerciale mensuelle (objectifs, commissions)"
 )
 
 PLAN_FILE="$PLAN_DIR/${TODAY}.csv"

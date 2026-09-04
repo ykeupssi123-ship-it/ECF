@@ -1033,3 +1033,70 @@ n'existe pas), REALTIME (architecture événementielle Kafka/webhooks,
 structurellement incompatible avec un ordonnanceur batch bash/CSV -
 jamais simulé avec les outils actuels pour ne pas donner une fausse
 impression de couverture).
+
+## 2026-09-05 — Anticipation : premier lot de jobs métier HAUTE priorité (Comptabilité TFJ/EOM/EOQ, Ventes EOM)
+
+Demande explicite : construire, depuis le catalogue des opérations
+(`docs/TABLEAU_DE_BORD_CYCLES_OPERATOIRES.xlsx`), les jobs réels des
+opérations déjà cataloguées comme A CONSTRUIRE/HAUTE priorité, avec
+leurs dépendances et leur calendrier réels — pas juste documenter,
+construire.
+
+**Construit** (5 jobs, 2 nouveaux cycles calendaires, 1 nouveau
+mécanisme de cadence appliqué à un cycle métier) :
+- Cycle TFJ Comptabilité (nouveau, 2 jobs) : `ECFCCPRB1`
+  (`ECF_COMPTA_CYC_RECONBANK`, réconciliation bancaire — lignes
+  `account.bank.statement.line` non rapprochées depuis plus de 2
+  jours) → `ECFCCPFI1` (`ECF_COMPTA_CYC_RELANCEFACT`, terminal —
+  factures `account.move` impayées en retard d'échéance). Nouvelle
+  entrée `CYCLE_WINDOWS` : `TFJ_COMPTA_WINDOW_OPEN` (`DAILY`).
+- `ECFCCPEM1` (`ECF_COMPTA_CYC_CLOTUREMENSUELLE`) — première clôture
+  mensuelle réelle : CA facturé, montant encaissé, balance âgée des
+  impayées du mois écoulé. Nouvelle entrée `COMPTA_EOM_WINDOW_OPEN`
+  (`MONTHLY`).
+- `ECFCVTEM1` (`ECF_VENTE_CYC_CLOTUREMENSUELLE`) — clôture commerciale
+  mensuelle : CA confirmé et répartition par commercial (base
+  commissions) du mois écoulé. Nouvelle entrée
+  `VENTES_EOM_WINDOW_OPEN` (`MONTHLY`).
+- `ECFCCPEQ1` (`ECF_COMPTA_CYC_DECLARTVA`) — première déclaration
+  trimestrielle réelle : TVA collectée/déductible/nette simplifiée du
+  trimestre écoulé, à partir des lignes `account.move` réelles
+  (avertissement explicite dans le rapport : calcul de pilotage
+  interne, ne remplace pas une déclaration fiscale officielle).
+  Nouvelle entrée `COMPTA_EOQ_WINDOW_OPEN` (`QUARTERLY`) — premier
+  cycle métier réel sur cette cadence (jusqu'ici seule la taxonomie la
+  documentait, aucun job construit dessus).
+
+**Choix de conception tranché explicitement** : le catalogue documente
+que la clôture mensuelle "dépend" du cycle quotidien ayant tourné
+chaque jour du mois, et que la déclaration trimestrielle "dépend" des
+3 clôtures mensuelles du trimestre. Vérifié que `montee_au_plan.sh`
+remet à zéro le jalon terminal d'un cycle À CHAQUE réouverture de sa
+fenêtre (y compris le jour où la fenêtre du cycle supérieur s'ouvre,
+dans la même exécution 00:05) — il n'existe donc aucun jalon technique
+"vivant" représentant l'historique d'exécutions passées. Décision :
+ces dépendances restent des dépendances MÉTIER documentées (colonne
+"Depend de" du catalogue), jamais des `IN_COND` techniques inventées
+pour faire semblant de les exprimer — l'assurance réelle vient du
+suivi opérationnel (`state/JOBS_HISTORY.csv`). Documenté en tête de
+`ECFCCPEM1.sh`/`ECFCCPEQ1.sh`/`ECFCVTEM1.sh`.
+
+**Vérifications réelles effectuées** : `bash -n` sur les 5 scripts et
+`bin/montee_au_plan.sh` ; `bin/verifier_independance_modules.sh` →
+toujours 34/34 indépendants ; colonnes `jobs_table.csv` (9 partout) et
+aucun `JOB_ID`/`OUT_COND` dupliqué ; bit exécutable Git corrigé
+(`git update-index --chmod=+x`, même bug que celui trouvé côté WEF le
+2026-09-04 — les nouveaux fichiers créés sur ce poste Windows héritent
+du même défaut de mode) ; test fonctionnel isolé de
+`montee_au_plan.sh` (répertoire d'état temporaire, jamais l'état réel)
+confirmant l'ouverture réelle des 2 nouvelles fenêtres `DAILY`, le
+`PAS_DU_JOUR` correct pour les fenêtres `MONTHLY`/`QUARTERLY` hors
+date, et l'idempotence au second passage.
+
+**Reste du lot HAUTE priorité, pas construit dans cette passe** (8
+opérations, prochain lot du même chantier) : CRM relance des pistes
+stagnantes (TFJ), Achat réapprovisionnement automatique nocturne
+(TFJ), Stock alertes de rupture temps quasi-réel (NRT) et inventaire
+tournant nocturne (TFJ), Point de vente clôture de caisse quotidienne
+(TFJ), RH alerte fin de contrat (TFJ), Présences calcul des heures
+travaillées mensuel (EOM).

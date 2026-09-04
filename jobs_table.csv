@@ -122,3 +122,8 @@ ECFRFAC2,ECF_ILL2_RUN_FACTUREMAIL,ODOO_HOST,ALWAYS,ECFRFAC2.sh,Illustration : fa
 ECFRSOC3,ECF_ILL3_RUN_SOCIETE,ODOO_HOST,ALWAYS,ECFRSOC3.sh,Illustration : creation de la societe PAIN & GLACE (boulangerie-glacier Yopougon),ODOO_SYSTEME_PRET,ILL3_SOCIETE_OK,ILL3
 ECFRSTK3,ECF_ILL3_RUN_STOCK,ODOO_HOST,ALWAYS,ECFRSTK3.sh,Illustration : produits et stock initial PAIN & GLACE (remplace le suivi Excel),STOCK_ACTIVE|ILL3_SOCIETE_OK,ILL3_STOCK_OK,ILL3
 ECFRFAC3,ECF_ILL3_RUN_FACTUREMAIL,ODOO_HOST,ALWAYS,ECFRFAC3.sh,Illustration : facture PAIN & GLACE reelle envoyee par email,ODOO_MAIL_SERVER_REAL_OK|COMPTA_ACTIVE|ILL3_STOCK_OK,ILL3_FACTURE_OK,ILL3
+ECFCCPRB1,ECF_COMPTA_CYC_RECONBANK,ODOO_HOST,ALWAYS,ECFCCPRB1.sh,Detecte les lignes de releve bancaire non rapprochees depuis plus de 2 jours - 1er job du cycle TFJ Comptabilite,TFJ_COMPTA_WINDOW_OPEN,TFJ_COMPTA_RECONBANK_OK,CP
+ECFCCPFI1,ECF_COMPTA_CYC_RELANCEFACT,ODOO_HOST,ALWAYS,ECFCCPFI1.sh,Detecte les factures client impayees en retard d'echeance - dernier job du cycle TFJ Comptabilite,TFJ_COMPTA_RECONBANK_OK,TFJ_COMPTA_TERMINE,CP
+ECFCCPEM1,ECF_COMPTA_CYC_CLOTUREMENSUELLE,ODOO_HOST,ALWAYS,ECFCCPEM1.sh,Cloture comptable mensuelle - CA facture/encaisse/balance agee du mois ecoule (cycle EOM),COMPTA_EOM_WINDOW_OPEN,COMPTA_EOM_TERMINE,CP
+ECFCCPEQ1,ECF_COMPTA_CYC_DECLARTVA,ODOO_HOST,ALWAYS,ECFCCPEQ1.sh,Declaration TVA trimestrielle simplifiee - TVA collectee/deductible/nette du trimestre ecoule (cycle EOQ),COMPTA_EOQ_WINDOW_OPEN,COMPTA_EOQ_TERMINE,CP
+ECFCVTEM1,ECF_VENTE_CYC_CLOTUREMENSUELLE,ODOO_HOST,ALWAYS,ECFCVTEM1.sh,Cloture commerciale mensuelle - CA et repartition par commercial du mois ecoule (cycle EOM),VENTES_EOM_WINDOW_OPEN,VENTES_EOM_TERMINE,VT

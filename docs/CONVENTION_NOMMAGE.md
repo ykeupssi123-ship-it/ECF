@@ -308,18 +308,48 @@ garde horaire interne). `OUT_COND=NONE` comme un job Tier 1 classique
 plage. Distinct du nettoyage de fond TFJ (qui traite les devis
 BROUILLON, jamais envoyés).
 
+### Exemples réels construits : cycle TFJ Comptabilité + EOM (Comptabilité et Ventes) + EOQ (le 4 septembre 2026, chantier "anticipation" — construction depuis le catalogue des opérations avec dépendances et calendrier réels)
+
+Deuxième cycle TFJ construit, même patron que Ventes (`ECFCVTRL/NT/RP`) :
+`ECFCCPRB1` (`ECF_COMPTA_CYC_RECONBANK`, `IN_COND=TFJ_COMPTA_WINDOW_OPEN`) →
+`ECFCCPFI1` (`ECF_COMPTA_CYC_RELANCEFACT`, job terminal,
+`OUT_COND=TFJ_COMPTA_TERMINE`). Nouvelle entrée `CYCLE_WINDOWS` :
+`TFJ_COMPTA_WINDOW_OPEN` (cadence `DAILY`).
+
+Premiers exemples réels de cadence `MONTHLY` appliqués à un cycle
+métier (jusqu'ici seule `PURGE_ARC_WINDOW_OPEN` l'utilisait, hors cycle
+métier) : `ECFCCPEM1` (`ECF_COMPTA_CYC_CLOTUREMENSUELLE`,
+`COMPTA_EOM_WINDOW_OPEN`) et `ECFCVTEM1`
+(`ECF_VENTE_CYC_CLOTUREMENSUELLE`, `VENTES_EOM_WINDOW_OPEN`).
+
+Premier exemple réel de cadence `QUARTERLY` appliqué à un cycle métier :
+`ECFCCPEQ1` (`ECF_COMPTA_CYC_DECLARTVA`, `COMPTA_EOQ_WINDOW_OPEN`).
+
+**Choix de conception explicite sur les dépendances inter-cadences** :
+le catalogue des opérations documente que la clôture mensuelle dépend
+du cycle TFJ quotidien ayant tourné chaque jour du mois, et que la
+déclaration trimestrielle dépend des 3 clôtures mensuelles du
+trimestre. Ceci reste une **dépendance métier documentée** (colonne
+"Depend de" du catalogue), jamais une `IN_COND` technique : le jalon
+d'un cycle DAILY/MONTHLY est remis à zéro par `montee_au_plan.sh` à
+CHAQUE ouverture de fenêtre (y compris le jour où la fenêtre du cycle
+supérieur s'ouvre) — il n'existe donc aucune condition technique
+"vivante" représentant 30 exécutions quotidiennes passées à laquelle
+s'accrocher proprement. L'assurance que le cycle inférieur a bien
+tourné pendant toute la période relève du suivi opérationnel
+(`state/JOBS_HISTORY.csv`, `bin/view_history.sh`), jamais d'un verrou
+de planification qu'aucun ordonnanceur calendaire (Control-M compris)
+n'exprime réellement de cette façon. Détail complet dans l'en-tête de
+`jobs/ECFCCPEM1.sh` et `jobs/ECFCCPEQ1.sh`.
+
 ### Ce qui reste à construire (roadmap honnête)
 
-- **EOW/EOQ/EOY** : extension directe de `CYCLE_WINDOWS`
-  (`WEEKLY`/`QUARTERLY`/`YEARLY`), même mécanisme qu'EOM — pas encore
-  d'exemple réel construit.
-- **CUTOFF** : même principe qu'EOD (marqueur horodaté, minuteur
-  dédié) mais avec une sémantique de bascule J/J+1 sur un FLUX précis
-  plutôt que sur la comptabilité globale — pas encore d'exemple réel.
-- **PURGE** : nettoyage périodique des fichiers archivés
-  (`$ECFOP/*/arc/`) au-delà d'une rétention — pas encore construit
-  côté ECF (WEF a `maintenance/MNT_purge_historique.sh` pour
-  l'historique des jobs, jamais pour les données métier `$ECFOP`).
+- **EOW/EOY** : extension directe de `CYCLE_WINDOWS`
+  (`WEEKLY`/`YEARLY`), même mécanisme qu'EOM/EOQ (déjà construits ci-dessus)
+  — pas encore d'exemple réel construit.
+- **CUTOFF** : construit — voir `jobs/ECFCCUT1.sh` (Achat, 15h).
+- **PURGE** : construit — voir `jobs/ECFCPRG1.sh` (archivage à froid des
+  fichiers `arc/` de plus de 90 jours).
 - **SIMULATION** : nécessite un environnement miroir/sandbox dédié —
   hors périmètre tant qu'un tel environnement n'existe pas.
 - **REALTIME** : architecture événementielle (Kafka/webhooks),
@@ -329,6 +359,12 @@ BROUILLON, jamais envoyés).
 - **REPLAY** : déjà couvert, rien à construire (`bin/rerun_job.sh` =
   rejoue une instance ; `bin/order_job.sh` = force malgré des
   dépendances manquantes).
+- **Reste du catalogue HAUTE priorité** (`docs/TABLEAU_DE_BORD_CYCLES_OPERATOIRES.xlsx`,
+  onglet "Catalogue des opérations") : 8 opérations HAUTE priorité
+  restent à construire après ce lot (CRM relance pistes, Achat
+  réapprovisionnement nocturne, Stock alertes rupture + inventaire
+  tournant, Point de vente clôture de caisse, RH alerte fin de contrat,
+  Présences calcul mensuel) — prochain lot du même chantier.
 
 ## Tier 1 — jobs métier réels (éclatement atomique, démarré le 4 septembre 2026)
 
