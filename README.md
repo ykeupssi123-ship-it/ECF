@@ -61,6 +61,12 @@ Chaque action exige une raison et retape le JOB_ID en confirmation
 - [`docs/JOURNAL_TECHNIQUE.md`](docs/JOURNAL_TECHNIQUE.md) — journal
   technique complet : chaque incident réel rencontré, sa cause racine
   vérifiée, la décision prise et pourquoi.
+- [`docs/CARTOGRAPHIE_SYSTEMIQUE.md`](docs/CARTOGRAPHIE_SYSTEMIQUE.md)
+  — vue d'ensemble architecture (les 3 tiers, le moteur d'exécution,
+  parité honnête avec Control-M).
+- [`docs/GUIDE_EXPLOITATION_SENIOR.md`](docs/GUIDE_EXPLOITATION_SENIOR.md)
+  — guide d'exploitation par scénarios réels (pas une liste de
+  commandes).
 
 ## Principe directeur
 
