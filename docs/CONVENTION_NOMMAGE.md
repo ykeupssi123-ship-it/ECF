@@ -265,9 +265,31 @@ Différences structurelles avec un job Tier 0 (`BLD`) :
   jobs produirait 30 copies de "créer une piste" qui ne varient que par
   le ton du commentaire, absurde en exploitation réelle.
 
-Les jobs `ECF_CRM_RUN_CONVERTOPP`/`MOVESTAGE`/`MARKWON`/`MARKLOST` et
-l'équivalent pour les 33 autres modules restent à construire, module
-par module, sur ce même patron. Voir `jobs_table.csv` pour la liste
+### Module CRM — terminé le 4 septembre 2026 (premier module complet)
+
+5 jobs, tous `OUT_COND=NONE`, tous sur `operations/cr/rcv` :
+
+| JOB_ID | En-tête CSV attendu | Action |
+|---|---|---|
+| `ECFRCRCL` | `name,partner_name,contact_name,phone,expected_revenue` | crée une piste |
+| `ECFRCRCO` | `lead_name` | convertit une piste en opportunité |
+| `ECFRCRMV` | `opportunity_name,stage` | avance une opportunité dans le pipeline |
+| `ECFRCRWO` | `opportunity_name` | marque une opportunité gagnée |
+| `ECFRCRLO` | `opportunity_name,lost_reason` | marque une opportunité perdue |
+
+**Bug trouvé et corrigé en les construisant** : `ECFRCRCO` et `ECFRCRWO`
+partageaient d'abord tous deux l'en-tête `"name"` — deux jobs
+partageant le même dossier `rcv/` ne doivent JAMAIS pouvoir revendiquer
+le même fichier (routage par en-tête ambigu = le premier job à
+s'exécuter aurait volé le fichier de l'autre, silencieusement). Corrigé
+en donnant à chaque job du même dossier un en-tête strictement unique
+(`lead_name` vs `opportunity_name`) — **règle à respecter pour tout
+futur job Tier 1** : avant d'ajouter un job à un dossier `rcv/` déjà
+utilisé par d'autres jobs, vérifier que son en-tête ne collisionne avec
+aucun des en-têtes déjà pris par ce dossier.
+
+L'équivalent pour les 33 autres modules reste à construire, module par
+module, sur ce même patron. Voir `jobs_table.csv` pour la liste
 exhaustive à mesure qu'ils sont ajoutés.
 
 ### Règle non négociable : les modules business ne dépendent JAMAIS les uns des autres

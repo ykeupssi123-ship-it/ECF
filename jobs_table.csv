@@ -28,6 +28,10 @@ ECFBDSDE,ECF_DISCUSS_BLD_DEACTIVATE,ODOO_HOST,ALWAYS,ECFBDSDE.sh,Desactivation m
 ECFBCRAC,ECF_CRM_BLD_ACTIVATE,ODOO_HOST,ALWAYS,ECFBCRAC.sh,Activation module crm : Suivi des pistes et opportunites commerciales,ODOO_SYSTEME_PRET,CRM_ACTIVE,CR
 ECFBCRDE,ECF_CRM_BLD_DEACTIVATE,ODOO_HOST,ALWAYS,ECFBCRDE.sh,Desactivation module crm : Suivi des pistes et opportunites commerciales,CRM_ACTIVE,CRM_INACTIVE,CR
 ECFRCRCL,ECF_CRM_RUN_CREATELEAD,ODOO_HOST,ALWAYS,ECFRCRCL.sh,Cree des pistes reelles depuis un CSV depose dans operations/cr/rcv (job repetable Tier 1 - reference du patron metier),CRM_ACTIVE,NONE,CR
+ECFRCRCO,ECF_CRM_RUN_CONVERTOPP,ODOO_HOST,ALWAYS,ECFRCRCO.sh,Convertit une piste existante en opportunite depuis un CSV depose dans operations/cr/rcv (job repetable Tier 1),CRM_ACTIVE,NONE,CR
+ECFRCRMV,ECF_CRM_RUN_MOVESTAGE,ODOO_HOST,ALWAYS,ECFRCRMV.sh,Fait avancer une opportunite existante dans le pipeline depuis un CSV depose dans operations/cr/rcv (job repetable Tier 1),CRM_ACTIVE,NONE,CR
+ECFRCRWO,ECF_CRM_RUN_MARKWON,ODOO_HOST,ALWAYS,ECFRCRWO.sh,Marque une opportunite existante comme gagnee depuis un CSV depose dans operations/cr/rcv (job repetable Tier 1),CRM_ACTIVE,NONE,CR
+ECFRCRLO,ECF_CRM_RUN_MARKLOST,ODOO_HOST,ALWAYS,ECFRCRLO.sh,Marque une opportunite existante comme perdue avec motif depuis un CSV depose dans operations/cr/rcv (job repetable Tier 1),CRM_ACTIVE,NONE,CR
 ECFBVTAC,ECF_VENTE_BLD_ACTIVATE,ODOO_HOST,ALWAYS,ECFBVTAC.sh,Activation module sale_management : devis commandes et facturation client,ODOO_SYSTEME_PRET,VENTE_ACTIVE,VT
 ECFBVTDE,ECF_VENTE_BLD_DEACTIVATE,ODOO_HOST,ALWAYS,ECFBVTDE.sh,Desactivation module sale_management : devis commandes et facturation client,VENTE_ACTIVE,VENTE_INACTIVE,VT
 ECFBCPAC,ECF_COMPTA_BLD_ACTIVATE,ODOO_HOST,ALWAYS,ECFBCPAC.sh,Activation module account : Facturation et comptabilite de base,ODOO_SYSTEME_PRET,COMPTA_ACTIVE,CP
