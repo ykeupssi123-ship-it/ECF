@@ -269,3 +269,34 @@ Les jobs `ECF_CRM_RUN_CONVERTOPP`/`MOVESTAGE`/`MARKWON`/`MARKLOST` et
 l'équivalent pour les 33 autres modules restent à construire, module
 par module, sur ce même patron. Voir `jobs_table.csv` pour la liste
 exhaustive à mesure qu'ils sont ajoutés.
+
+### Règle non négociable : les modules business ne dépendent JAMAIS les uns des autres
+
+Rappel explicite (déjà énoncé, jamais garanti que par une vérification
+manuelle ponctuelle jusqu'au 4 septembre 2026) : contrairement à
+WAZ_ELK_FACTORY (où `orchestrator.sh` fait `exit 1` à la première
+erreur, un service non installé bloque tous les suivants),
+`orchestrator.sh` d'ECF isole déjà les pannes par `SERVICE`
+(`FAILED_SERVICES`, jamais de `exit 1` global — voir son en-tête).
+Mais l'isolation de panne ne suffit pas seule : encore faut-il
+qu'AUCUN module business ne pose, dans son `IN_COND`, une dépendance
+vers un AUTRE module business. **Garanti désormais
+structurellement**, pas seulement par discipline manuelle :
+`./bin/verifier_independance_modules.sh` — à relancer après CHAQUE
+ajout de job Tier 1, exit 0 si tous les modules business restent
+indépendants (ne dépendent que de `SYS`/`ODOO_SYSTEME_PRET` ou
+d'eux-mêmes), exit 1 avec le détail exact sinon. Deux catégories
+volontairement exemptées de cette règle (documenté, jamais une
+échappatoire silencieuse) :
+
+- les groupes d'illustration (`ILL1`/`ILL2`/`ILL3`) qui dépendent du
+  module business dont ils démontrent l'usage (ex. `ECFREMP1` dépend
+  de `RH_ACTIVE`) — c'est le sujet même de la démo, pas un couplage
+  artificiel entre deux modules indépendants ;
+- `SYS` qui dépend de `RY` (`ECFRCLN` attend la fin du recyclage des
+  données avant la vérification finale) — séquencement interne au
+  Tier 0 (système), jamais une dépendance entre deux modules business.
+
+Testé en réel (une fausse dépendance injectée temporairement entre
+`VT` et `CR`, détectée avec le détail exact, puis le fichier restauré
+à l'identique) avant d'être documenté ici.
