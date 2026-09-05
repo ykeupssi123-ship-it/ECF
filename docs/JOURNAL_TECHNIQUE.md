@@ -1241,3 +1241,23 @@ littéral en dur) ; un fichier factice vieux de 90+ jours déposé dans
 - Régénération des deux classeurs Excel, vérifiée via COM : 31/31 jobs retrouvés dans les 2 feuilles du dossier d'exploitation (imbrication à 2 niveaux toujours cohérente), 88/88 opérations dans le catalogue, graphique "Statut réel" recalculé (44 À CONSTRUIRE / 42 CONSTRUITES / 2 HORS PÉRIMÈTRE).
 
 **Résultat catalogue** : 42 des 88 opérations désormais CONSTRUITES (contre 30).
+
+## 2026-09-05 — Notification par email sur événement MÉTIER (bin/notifier_metier.sh)
+
+**Demande explicite** : voir arriver par email, sur des critères métier (pas des échecs système), des éléments réellement produits/reçus dans les répertoires du serveur Linux — à la manière du SMTP déjà configuré côté WAZ_ELK_FACTORY, adapté au contexte ERP_CRM_FACTORY.
+
+**Constat** : `bin/notifier.sh` (déjà présent, copié de WEF) n'alerte QUE sur échec de job — un événement système, jamais un résultat métier. Aucun mécanisme n'existait pour dire « ce traitement a réussi ET produit quelque chose qui mérite un regard humain ».
+
+**Construit** : `bin/notifier_metier.sh`, nouveau script autonome, même mécanisme SMTP que `bin/notifier.sh` (curl en SMTP direct, détection SSL/STARTTLS automatique, mot de passe hors de Git) mais avec deux différences réelles :
+- **Toggle et destinataire séparés** (`NOTIF_METIER_ENABLED`/`NOTIF_METIER_TO`, vars.conf, désactivé par défaut) — un client peut vouloir les alertes IT sans les digests métier, ou l'inverse.
+- **Pièce jointe réelle** : contrairement à `notifier.sh` (texte seul), le fichier produit/reçu par le job est joint tel quel (MIME multipart/mixed, base64) — répond directement à « voir les éléments des répertoires arriver par mail ».
+
+**Câblé sur 4 jobs réels**, choisis pour couvrir les 2 façons dont un critère métier se pose :
+- `ECFCALRRH1` (RH, fin de contrat) et `ECFCALRFL1` (Flotte, échéance assurance/CT) — critère de **seuil** (`COUNT > 0`, jamais un envoi systématique).
+- `ECFCCLOCR1` (CRM, bilan hebdomadaire) — critère **calendaire** (un digest hebdomadaire a un sens toutes les semaines, envoi systématique à chaque cycle EOW).
+- `ECFJRELEC1` (eCommerce, relance paniers) — réutilise le critère `NOUVEAU > 0` déjà présent dans le job (celui qui évite déjà de reproduire le même panier).
+
+**Vérifié réellement** (sans réseau SMTP disponible dans cet environnement, même limite que pour `notifier.sh` lui-même) :
+- `bash -n` sur `notifier_metier.sh` et les 4 jobs modifiés ; `bin/verifier_independance_modules.sh` → 34/34 toujours indépendants.
+- **Construction du message MIME testée pour de vrai** : un faux `curl` (capturant le fichier `--upload-file` au lieu d'émettre sur le réseau) a intercepté un envoi réel de `notifier_metier.sh` avec pièce jointe — en-têtes corrects (`From`/`To`/`Subject` préfixé `[ERP_CRM_FACTORY]`/`MIME-Version`/boundary), partie texte et partie pièce jointe bien séparées, et le contenu base64 de la pièce jointe se décode EXACTEMENT vers le fichier original (`test contenu reel` → round-trip confirmé).
+- La livraison réseau réelle (relais OVH réel) reste à confirmer sur la VM cible, comme documenté dans l'en-tête du script.

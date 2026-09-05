@@ -11,6 +11,13 @@
 # ecrit dans $OPERATIONS_DIR/rh/snd (sous-dossier canonique).
 # OUT_COND=TFJ_RH_TERMINE (REEL, remis a zero par montee_au_plan.sh le
 # cycle suivant).
+#
+# NOTIFICATION METIER (bin/notifier_metier.sh, AJOUTE LE 2026-09-05,
+# demande explicite utilisateur) : si au moins un contrat arrive
+# reellement a echeance, le rapport est envoye par email au
+# destinataire RH (NOTIF_METIER_TO, vars.conf) - JAMAIS a chaque
+# execution (critere metier reel : COUNT > 0), desactive par defaut
+# (NOTIF_METIER_ENABLED="non") tant que ce n'est pas configure.
 set -uo pipefail
 source "$VARS_FILE"
 PROJECT_ROOT="$(dirname "$VARS_FILE")"
@@ -49,5 +56,13 @@ fi
 
 echo "[ECF_RH_CYC_FINCONTRAT] $COUNT contrat(s) arrivant a echeance sous 30 jours - rapport : $RAPPORT"
 echo "$RAPPORT" >> "${ECF_JOB_PATHS_FILE:-/dev/null}"
+
+if [ "$COUNT" -gt 0 ]; then
+  "$PROJECT_ROOT/bin/notifier_metier.sh" \
+    "RH : ${COUNT} contrat(s) arrivant a echeance sous 30 jours" \
+    "Le cycle TFJ RH du $(date +%Y-%m-%d) a detecte ${COUNT} contrat(s) (CDD/periode d'essai) arrivant a echeance sous 30 jours. Detail en piece jointe." \
+    "$RAPPORT" || true
+fi
+
 echo "[ECF_RH_CYC_FINCONTRAT] Cycle TFJ RH TERMINE pour aujourd'hui."
 exit 0

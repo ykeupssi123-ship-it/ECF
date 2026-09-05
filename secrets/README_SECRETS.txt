@@ -13,6 +13,14 @@ secrets/smtp_password.txt par defaut (section "ALERTE PAR EMAIL SUR
 ECHEC DE JOB"). Il ne reste qu'a renseigner NOTIF_ENABLED/SMTP_HOST/
 SMTP_USER/NOTIF_FROM/NOTIF_TO dans vars.conf si ce n'est pas deja fait.
 
+AJOUTE LE 2026-09-05 : le MEME fichier smtp_password.txt sert aussi a
+bin/notifier_metier.sh (alertes sur EVENEMENT METIER - contrats a
+echeance, bilans, etc. - jamais sur echec de job, voir l'en-tete de ce
+script). Un seul mot de passe/compte email pour les deux mecanismes -
+seuls NOTIF_METIER_ENABLED et NOTIF_METIER_TO (section "ALERTE PAR
+EMAIL SUR EVENEMENT METIER", vars.conf) restent a renseigner separement,
+desactive par defaut tant que non configure.
+
 AJOUTE LE 2026-08-30, suite a l'audit reel de la reprise WAZ_020_VERIFY
 (4 mots de passe trouves EN CLAIR dans vars.conf, dont le mot de passe
 root reel des VM de l'usine) - 4 fichiers de plus suivent maintenant la

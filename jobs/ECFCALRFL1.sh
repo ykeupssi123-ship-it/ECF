@@ -49,5 +49,16 @@ fi
 
 echo "[ECF_FLEET_CYC_ALERTEECHEANCE] $COUNT contrat(s) vehicule arrivant a echeance sous ${HORIZON_JOURS} jours - rapport : $RAPPORT"
 echo "$RAPPORT" >> "${ECF_JOB_PATHS_FILE:-/dev/null}"
+
+# NOTIFICATION METIER (bin/notifier_metier.sh, AJOUTE LE 2026-09-05) :
+# critere reel COUNT > 0, jamais un envoi systematique - voir
+# jobs/ECFCALRRH1.sh pour le meme patron.
+if [ "$COUNT" -gt 0 ]; then
+  "$PROJECT_ROOT/bin/notifier_metier.sh" \
+    "Flotte : ${COUNT} contrat(s) vehicule a echeance sous ${HORIZON_JOURS} jours" \
+    "Le cycle JOUR Flotte du $(date +%Y-%m-%d) a detecte ${COUNT} contrat(s) (assurance/controle technique) arrivant a echeance sous ${HORIZON_JOURS} jours. Detail en piece jointe." \
+    "$RAPPORT" || true
+fi
+
 echo "[ECF_FLEET_CYC_ALERTEECHEANCE] Cycle JOUR Flotte TERMINE pour aujourd'hui."
 exit 0

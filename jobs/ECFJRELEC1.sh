@@ -63,4 +63,14 @@ fi
 
 echo "[ECF_ECOM_JOUR_RELANCEPANIER] $NOUVEAU nouveau(x) panier(s) a relancer sur $COUNT detecte(s) - rapport : $RAPPORT"
 echo "$RAPPORT" >> "${ECF_JOB_PATHS_FILE:-/dev/null}"
+
+# NOTIFICATION METIER (bin/notifier_metier.sh, AJOUTE LE 2026-09-05) :
+# critere deja naturellement present dans ce job (NOUVEAU > 0, la
+# meme condition qui evite deja de reproduire le rapport) - voir
+# jobs/ECFCALRRH1.sh pour le meme patron sur un autre module.
+"$PROJECT_ROOT/bin/notifier_metier.sh" \
+  "eCommerce : ${NOUVEAU} nouveau(x) panier(s) a relancer" \
+  "$NOUVEAU nouveau(x) panier(s) en ligne inactif(s) depuis plus de ${SEUIL_HEURES}h (sur $COUNT au total suivis). Detail en piece jointe." \
+  "$RAPPORT" || true
+
 exit 0

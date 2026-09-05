@@ -54,5 +54,17 @@ fi
 
 echo "[ECF_CRM_CYC_PIPELINEHEBDO] Bilan hebdomadaire ecrit : $RAPPORT"
 echo "$RAPPORT" >> "${ECF_JOB_PATHS_FILE:-/dev/null}"
+
+# NOTIFICATION METIER (bin/notifier_metier.sh, AJOUTE LE 2026-09-05) :
+# ici le critere metier est le CALENDRIER lui-meme (un digest
+# hebdomadaire a un sens toutes les semaines, contrairement a une
+# alerte de seuil) - envoi systematique a chaque cycle EOW, jamais
+# conditionne a un COUNT (voir jobs/ECFCALRRH1.sh pour le cas
+# "seuil").
+"$PROJECT_ROOT/bin/notifier_metier.sh" \
+  "CRM : bilan hebdomadaire du pipeline commercial" \
+  "Bilan de la semaine se terminant le $(date +%Y-%m-%d) - detail en piece jointe." \
+  "$RAPPORT" || true
+
 echo "[ECF_CRM_CYC_PIPELINEHEBDO] Cycle EOW CRM TERMINE pour cette semaine."
 exit 0
