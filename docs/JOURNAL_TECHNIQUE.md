@@ -1287,3 +1287,26 @@ littéral en dur) ; un fichier factice vieux de 90+ jours déposé dans
 - `headerBar` (rose/magenta) inchangé : c'est déjà la couleur exacte du bouton "Demandez une démo" d'Ankrr, aucun changement nécessaire.
 
 **Résultat catalogue** : 44 des 88 opérations désormais CONSTRUITES (contre 42).
+
+## 2026-09-05 — Alignement TABLEAU_DE_BORD sur DOSSIER_EXPLOITATION + le vrai poids du quotidien (argument MCO)
+
+**Constat de l'utilisateur, vérifié et confirmé réel** : `TABLEAU_DE_BORD_CYCLES_OPERATOIRES.xlsx` n'avait jamais reçu la mise en page A4 (`Set-PrintLayout`) contrairement à `DOSSIER_EXPLOITATION_QUOTIDIEN.xlsx` qui l'a depuis le début — vrai écart, corrigé. Deux feuilles étaient réellement figées et périmées, exactement comme suspecté :
+- **"Cycles réels construits"** référençait `ECFCVTRL`/`ECFCVTNT`/`ECFCVTRP`/`ECFJVTSV`/`ECFCEOD1` — des `JOB_ID` qui n'existent plus depuis le renommage REL/CLO/ALR du 2026-09-05 (matin) — et affichait "5 cycles, un par type" alors que 13 cadences étaient déjà construites.
+- **"Exploitation MCO - efficacité"** affichait "123 jobs"/"5 des 14 types" (figés au 2026-09-04) et les mêmes `JOB_ID` morts dans le tableau de parité Control-M.
+
+**Corrigé à la racine** (pas juste retapé à la main, pour que ça ne se reproduise plus) : les deux feuilles sont désormais **générées en direct** depuis `exploitation_jobs.csv`/`catalogue_operations.csv`/`jobs_table.csv` à chaque régénération — plus aucun chiffre ni `JOB_ID` écrit en dur dans le script. `DOSSIER_ARCHITECTURE.xlsx` et `INFRASTRUCTURE_ECF.pdf` avaient le même défaut (respectivement "136 jobs" et "136/34/30-88/6") — corrigés et regénérés (image PNG incluse, re-extraite du `.docx` mis à jour).
+
+**Question de fond de l'utilisateur** : sur l'histogramme "Opérations par type de traitement", EOM (20) domine largement JOUR (4) et EOD (1) — cela remet-il en cause l'argument d'un contrat MCO (le quotidien justifie l'abonnement), et est-ce une limite de Community ou une mauvaise construction du catalogue ?
+
+**Réponse honnête, vérifiée par le calcul, pas par intuition** : ni l'un ni l'autre exactement. EOD et JOUR sont **architecturalement des types à faible cardinalité** — un EOD est un unique jalon comptable par système (pas un par module), un JOUR est un contrôle diurne ponctuel qui ne s'applique pas à tous les modules — les gonfler artificiellement aurait été de la "conformité simulée" (contraire au principe directeur du dépôt). Le vrai problème était **le graphique lui-même** : regrouper par étiquette brute de type (TFJ/JOUR/JOUR-NRT/NRT/EOD/CUTOFF/INTRADAY/DIFFERE) éclate le "travail quotidien/continu" en 8 barres courtes qui paraissent chacune insignifiantes, alors que leur somme domine déjà le catalogue. **Recalculé par vraie famille de cadence** (calcul réel sur les 88 lignes, pas une estimation) :
+- Quotidien / continu : **40** (46%)
+- Périodique (mensuel et plus) : 32 (36%)
+- Ponctuel / à la demande : 16 (18%)
+
+Le quotidien est déjà **majoritaire** — l'argument MCO est déjà vrai, il fallait juste le bon graphique pour le voir. Nouveau 3e graphique "Le vrai poids du quotidien (par famille de cadence)" ajouté sur `Vue d'ensemble`, à côté des 2 graphiques existants (recolorés Ankrr : bleu/violet/vert).
+
+**Vérifié réellement** :
+- Les 2 feuilles rebâties relues via COM : `Cycles reels construits` montre 13 cadences avec `JOB_ID` réels et vérifiables (`ECFCRELVT1`, `ECFCCLOVT2`, `ECFJALRVT1`... aucune référence morte) ; `Exploitation MCO - efficacite` montre 150 jobs / 13 cadences / 44 sur 88 opérations, tous calculés en direct.
+- **Bug réel trouvé et corrigé avant livraison** : le premier export PDF de test de `Vue d'ensemble` produisait une page 2 quasiment vide (Excel coupait la page en plein milieu des petits tableaux sources des graphiques). Corrigé par un saut de page forcé (`HPageBreaks.Add`) juste avant le bloc "tableau de bord visuel" — reverifié par un second export PDF réel : page 1 = texte d'introduction, page 2 = les 3 tableaux + les 3 graphiques, proprement.
+- Colonnes élargies (`Statut`, `Famille de cadence`) après avoir constaté à l'export PDF que "HORS PERIMETRE"/"Ponctuel / à la demande" étaient tronqués.
+- Les 7 feuilles du classeur ont désormais `PageSetup` A4 paysage (`Orientation=2`, `FitToPagesWide=1`, `PaperSize=9`), vérifié via COM sur chacune.
