@@ -14,7 +14,6 @@ source "$VARS_FILE"
 PROJECT_ROOT="$(dirname "$VARS_FILE")"
 source "$PROJECT_ROOT/lib/commun.sh"
 
-OPERATIONS_DIR="${ODOO_HOME}/operations"
 RCV_DIR="$OPERATIONS_DIR/cr/rcv"
 ARC_DIR="$OPERATIONS_DIR/cr/arc"
 EXPECTED_HEADER="opportunity_name"

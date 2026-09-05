@@ -14,7 +14,6 @@ source "$VARS_FILE"
 PROJECT_ROOT="$(dirname "$VARS_FILE")"
 source "$PROJECT_ROOT/lib/commun.sh"
 
-OPERATIONS_DIR="${ODOO_HOME}/operations"
 RCV_DIR="$OPERATIONS_DIR/vt/rcv"
 ARC_DIR="$OPERATIONS_DIR/vt/arc"
 EXPECTED_HEADER="order_to_confirm"

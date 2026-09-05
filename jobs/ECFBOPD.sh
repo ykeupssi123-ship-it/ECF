@@ -35,7 +35,6 @@ source "$VARS_FILE"
 PROJECT_ROOT="$(dirname "$VARS_FILE")"
 source "$PROJECT_ROOT/lib/commun.sh"
 
-OPERATIONS_DIR="${ODOO_HOME}/operations"
 
 # Codes courts des 34 modules (identiques a la colonne SERVICE de
 # jobs_table.csv - jamais une seconde liste maintenue a la main).

@@ -18,7 +18,6 @@ PROJECT_ROOT="$(dirname "$VARS_FILE")"
 source "$PROJECT_ROOT/lib/commun.sh"
 
 PURGE_RETENTION_JOURS="${PURGE_RETENTION_JOURS:-90}"
-OPERATIONS_DIR="${ODOO_HOME}/operations"
 ARCHIVE_FROIDE_DIR="${ODOO_HOME}/operations_archive_froide"
 mkdir -p "$ARCHIVE_FROIDE_DIR"
 

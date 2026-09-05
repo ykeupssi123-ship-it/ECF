@@ -31,7 +31,6 @@ source "$VARS_FILE"
 PROJECT_ROOT="$(dirname "$VARS_FILE")"
 source "$PROJECT_ROOT/lib/commun.sh"
 
-OPERATIONS_DIR="${ODOO_HOME}/operations"
 RCV_DIR="$OPERATIONS_DIR/ah/rcv"
 ARC_DIR="$OPERATIONS_DIR/ah/arc"
 EXPECTED_HEADER="po_to_receive"

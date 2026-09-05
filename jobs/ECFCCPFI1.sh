@@ -16,7 +16,6 @@ source "$VARS_FILE"
 PROJECT_ROOT="$(dirname "$VARS_FILE")"
 source "$PROJECT_ROOT/lib/commun.sh"
 
-OPERATIONS_DIR="${ODOO_HOME}/operations"
 SND_DIR="$OPERATIONS_DIR/cp/snd"
 mkdir -p "$SND_DIR"
 

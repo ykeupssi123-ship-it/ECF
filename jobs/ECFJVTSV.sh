@@ -30,7 +30,6 @@ if [ "$HEURE_COURANTE" -lt "$HEURE_DEBUT" ] || [ "$HEURE_COURANTE" -ge "$HEURE_F
   exit 0
 fi
 
-OPERATIONS_DIR="${ODOO_HOME}/operations"
 SND_DIR="$OPERATIONS_DIR/vt/snd"
 mkdir -p "$SND_DIR"
 RAPPORT="$SND_DIR/suivi_jour_devis_$(date +%Y%m%d_%H%M).csv"

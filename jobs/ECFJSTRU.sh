@@ -22,7 +22,6 @@ source "$VARS_FILE"
 PROJECT_ROOT="$(dirname "$VARS_FILE")"
 source "$PROJECT_ROOT/lib/commun.sh"
 
-OPERATIONS_DIR="${ODOO_HOME}/operations"
 SND_DIR="$OPERATIONS_DIR/st/snd"
 mkdir -p "$SND_DIR"
 RAPPORT="$SND_DIR/alerte_rupture_$(date +%Y%m%d_%H%M).csv"
