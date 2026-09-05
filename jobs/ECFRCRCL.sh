@@ -26,8 +26,8 @@ source "$VARS_FILE"
 PROJECT_ROOT="$(dirname "$VARS_FILE")"
 source "$PROJECT_ROOT/lib/commun.sh"
 
-RCV_DIR="$OPERATIONS_DIR/cr/rcv"
-ARC_DIR="$OPERATIONS_DIR/cr/arc"
+RCV_DIR="$OPERATIONS_DIR/cr/$DOSSIER_RECU"
+ARC_DIR="$OPERATIONS_DIR/cr/$DOSSIER_ARCHIVE"
 EXPECTED_HEADER="name,partner_name,contact_name,phone,expected_revenue"
 
 mkdir -p "$RCV_DIR" "$ARC_DIR"

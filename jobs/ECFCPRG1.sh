@@ -18,7 +18,6 @@ PROJECT_ROOT="$(dirname "$VARS_FILE")"
 source "$PROJECT_ROOT/lib/commun.sh"
 
 PURGE_RETENTION_JOURS="${PURGE_RETENTION_JOURS:-90}"
-ARCHIVE_FROIDE_DIR="${ODOO_HOME}/operations_archive_froide"
 mkdir -p "$ARCHIVE_FROIDE_DIR"
 
 TOTAL_DEPLACES=0
@@ -32,7 +31,7 @@ while IFS= read -r ARC_DIR; do
     echo "$DEST_DIR/$(basename "$FICHIER")" >> "${ECF_JOB_PATHS_FILE:-/dev/null}"
     TOTAL_DEPLACES=$((TOTAL_DEPLACES + 1))
   done < <(find "$ARC_DIR" -maxdepth 1 -type f -mtime "+${PURGE_RETENTION_JOURS}" -print0 2>/dev/null)
-done < <(find "$OPERATIONS_DIR" -maxdepth 2 -type d -name "arc" 2>/dev/null)
+done < <(find "$OPERATIONS_DIR" -maxdepth 2 -type d -name "$DOSSIER_ARCHIVE" 2>/dev/null)
 
 echo "[ECF_SYS_CYC_PURGE] $TOTAL_DEPLACES fichier(s) de plus de ${PURGE_RETENTION_JOURS} jours deplace(s) vers $ARCHIVE_FROIDE_DIR."
 exit 0

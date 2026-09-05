@@ -18,7 +18,7 @@ source "$VARS_FILE"
 PROJECT_ROOT="$(dirname "$VARS_FILE")"
 source "$PROJECT_ROOT/lib/commun.sh"
 
-SND_DIR="$OPERATIONS_DIR/pj/snd"
+SND_DIR="$OPERATIONS_DIR/pj/$DOSSIER_PRODUIT"
 mkdir -p "$SND_DIR"
 
 RAPPORT="$SND_DIR/facturation_temps_passe_$(date +%Y%m).csv"

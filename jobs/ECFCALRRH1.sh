@@ -16,7 +16,7 @@ source "$VARS_FILE"
 PROJECT_ROOT="$(dirname "$VARS_FILE")"
 source "$PROJECT_ROOT/lib/commun.sh"
 
-SND_DIR="$OPERATIONS_DIR/rh/snd"
+SND_DIR="$OPERATIONS_DIR/rh/$DOSSIER_PRODUIT"
 mkdir -p "$SND_DIR"
 
 RAPPORT="$SND_DIR/alerte_fin_contrat_$(date +%Y%m%d).csv"

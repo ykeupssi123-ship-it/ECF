@@ -31,8 +31,8 @@ source "$VARS_FILE"
 PROJECT_ROOT="$(dirname "$VARS_FILE")"
 source "$PROJECT_ROOT/lib/commun.sh"
 
-RCV_DIR="$OPERATIONS_DIR/ah/rcv"
-ARC_DIR="$OPERATIONS_DIR/ah/arc"
+RCV_DIR="$OPERATIONS_DIR/ah/$DOSSIER_RECU"
+ARC_DIR="$OPERATIONS_DIR/ah/$DOSSIER_ARCHIVE"
 EXPECTED_HEADER="po_to_receive"
 
 mkdir -p "$RCV_DIR" "$ARC_DIR"

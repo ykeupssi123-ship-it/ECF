@@ -24,7 +24,7 @@ source "$VARS_FILE"
 PROJECT_ROOT="$(dirname "$VARS_FILE")"
 source "$PROJECT_ROOT/lib/commun.sh"
 
-SND_DIR="$OPERATIONS_DIR/cp/snd"
+SND_DIR="$OPERATIONS_DIR/cp/$DOSSIER_PRODUIT"
 mkdir -p "$SND_DIR"
 
 RAPPORT="$SND_DIR/declaration_tva_$(date +%Y%m).txt"

@@ -14,7 +14,7 @@ source "$VARS_FILE"
 PROJECT_ROOT="$(dirname "$VARS_FILE")"
 source "$PROJECT_ROOT/lib/commun.sh"
 
-SND_DIR="$OPERATIONS_DIR/vt/snd"
+SND_DIR="$OPERATIONS_DIR/vt/$DOSSIER_PRODUIT"
 mkdir -p "$SND_DIR"
 
 RAPPORT="$SND_DIR/rapport_eod_$(date +%Y%m%d).txt"

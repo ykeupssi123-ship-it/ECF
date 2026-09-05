@@ -17,7 +17,7 @@ source "$VARS_FILE"
 PROJECT_ROOT="$(dirname "$VARS_FILE")"
 source "$PROJECT_ROOT/lib/commun.sh"
 
-SND_DIR="$OPERATIONS_DIR/ah/snd"
+SND_DIR="$OPERATIONS_DIR/ah/$DOSSIER_PRODUIT"
 mkdir -p "$SND_DIR"
 
 RAPPORT="$SND_DIR/reappro_propose_$(date +%Y%m%d).csv"

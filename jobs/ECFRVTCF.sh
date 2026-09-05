@@ -14,8 +14,8 @@ source "$VARS_FILE"
 PROJECT_ROOT="$(dirname "$VARS_FILE")"
 source "$PROJECT_ROOT/lib/commun.sh"
 
-RCV_DIR="$OPERATIONS_DIR/vt/rcv"
-ARC_DIR="$OPERATIONS_DIR/vt/arc"
+RCV_DIR="$OPERATIONS_DIR/vt/$DOSSIER_RECU"
+ARC_DIR="$OPERATIONS_DIR/vt/$DOSSIER_ARCHIVE"
 EXPECTED_HEADER="order_to_confirm"
 
 mkdir -p "$RCV_DIR" "$ARC_DIR"

@@ -45,7 +45,7 @@ mkdir -p "$OPERATIONS_DIR"
 COUNT=0
 while IFS= read -r code; do
   [ -z "$code" ] && continue
-  for sub in rcv snd tmp arc; do
+  for sub in "$DOSSIER_RECU" "$DOSSIER_PRODUIT" "$DOSSIER_TRANSIT" "$DOSSIER_ARCHIVE"; do
     mkdir -p "${OPERATIONS_DIR}/${code}/${sub}"
   done
   COUNT=$((COUNT+1))

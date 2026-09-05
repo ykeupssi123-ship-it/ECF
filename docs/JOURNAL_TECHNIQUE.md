@@ -1161,3 +1161,53 @@ nouveaux scripts.
 
 **Résultat catalogue** : 30 des 88 opérations désormais CONSTRUITES
 (contre 22), **0 opération HAUTE priorité restant A CONSTRUIRE**.
+
+## 2026-09-05 — Rôles rcv/snd/tmp/arc promus en variables réelles + colonne TRANSIT manquante
+
+**Constat** (question explicite de l'utilisateur : « comment appeler ces
+répertoires pour qu'un nom de variable dise déjà ce qu'on va y
+trouver ? ») : exactement la même duplication que celle corrigée le
+même jour pour `OPERATIONS_DIR` — les littéraux `"rcv"`, `"snd"` et
+`"arc"` étaient recopiés à l'identique dans **27 jobs différents**
+(`RCV_DIR="$OPERATIONS_DIR/<module>/rcv"`, etc.), plus une seconde fois
+dans `jobs/ECFBOPD.sh` (boucle de création) et `jobs/ECFCPRG1.sh`
+(`ARCHIVE_FROIDE_DIR` recalculé localement). Aucun de ces noms n'existait
+comme variable réelle du projet.
+
+**Corrigé** : 5 nouvelles variables dans `vars.conf`, nommées sur le
+vocabulaire déjà utilisé dans le dossier d'exploitation (colonnes
+« Dossier RECU/PRODUIT/ARCHIVE » de la feuille « Espace central
+d'échange ») — appeler la variable donne déjà le rôle, sans avoir besoin
+de connaître un module précis :
+- `DOSSIER_RECU="rcv"`, `DOSSIER_PRODUIT="snd"`, `DOSSIER_TRANSIT="tmp"`,
+  `DOSSIER_ARCHIVE="arc"` — les 4 rôles, réutilisés par tous les jobs
+  (`RCV_DIR`/`SND_DIR`/`ARC_DIR` restent des variables LOCALES à chaque
+  job, elles combinent juste un de ces rôles avec le module concerné).
+- `ARCHIVE_FROIDE_DIR="${ODOO_HOME}/operations_archive_froide"` —
+  destination finale cross-module après purge, précédemment recalculée
+  dans le seul `ECFCPRG1.sh`.
+
+**Deuxième constat, trouvé en corrigeant le premier** : la colonne
+`tmp` (transit) était **totalement absente** du tableau de la feuille
+« Espace central d'échange » (seules RECU/PRODUIT/ARCHIVE y figuraient),
+alors que `jobs/ECFBOPD.sh` crée bien ce 4e sous-dossier sur le disque
+depuis le début et que la légende de la même feuille le mentionne déjà
+en prose. Colonne « Dossier TRANSIT (tmp) » ajoutée entre PRODUIT et
+ARCHIVE, alimentée par une nouvelle colonne `CheminTransit` dans
+`exploitation_repertoires.csv` (une par module, valeur réelle
+`$OPERATIONS_DIR/<module>/tmp`). Commentaires de `bin/env_exploitation.sh`
+corrigés au passage (mentionnaient "rcv/snd/arc", "3 sous-dossiers" et
+"102 combinaisons" — corrigé en "rcv/snd/tmp/arc", "4 sous-dossiers" et
+"136 combinaisons" pour rester exact).
+
+**Vérifié réellement** : `bash -n` sur les 27 jobs touchés + `ECFBOPD.sh`
++ `ECFCPRG1.sh` + `vars.conf` ; `source vars.conf` isolé confirmant les 5
+nouvelles valeurs ; `bin/verifier_independance_modules.sh` → 34/34
+toujours indépendants ; **test fonctionnel de bout en bout** dans un
+`ODOO_HOME` temporaire isolé : `ECFBOPD.sh` crée bien 34 modules × 4
+sous-dossiers (136, via la boucle `for sub in "$DOSSIER_RECU"
+"$DOSSIER_PRODUIT" "$DOSSIER_TRANSIT" "$DOSSIER_ARCHIVE"`, plus aucun
+littéral en dur) ; un fichier factice vieux de 90+ jours déposé dans
+`arc/` a été retrouvé par `ECFCPRG1.sh` (recherche désormais
+`-name "$DOSSIER_ARCHIVE"`) et réellement déplacé vers
+`operations_archive_froide/vt/` via la variable promue.
