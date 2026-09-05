@@ -6,9 +6,9 @@
 #
 # DEPENDANCE METIER REELLE (catalogue, colonne "Depend de") : ce calcul
 # s'appuie sur un rapport quotidien de presences/anomalies qui n'est pas
-# encore construit - meme raisonnement documente que ECFCCPEM1
+# encore construit - meme raisonnement documente que ECFCCLOCP2
 # (Comptabilite) vis-a-vis du cycle TFJ quotidien : dependance METIER,
-# jamais une IN_COND technique (voir ECFCCPEM1.sh pour l'explication
+# jamais une IN_COND technique (voir ECFCCLOCP2.sh pour l'explication
 # complete). Ce job fonctionne des maintenant de facon autonome, a
 # partir des pointages reels (hr.attendance) - le rapport quotidien
 # viendra enrichir l'exploitation plus tard, sans etre un prealable

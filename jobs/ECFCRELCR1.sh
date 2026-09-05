@@ -1,5 +1,5 @@
 #!/bin/bash
-# ECFCCRRL1 - ECF_CRM_CYC_RELANCE - Cycle TFJ CRM (voir bin/montee_au_plan.sh,
+# ECFCRELCR1 - ECF_CRM_CYC_RELANCE - Cycle TFJ CRM (voir bin/montee_au_plan.sh,
 # meme patron que le cycle TFJ Ventes). IN_COND=TFJ_CRM_WINDOW_OPEN (ouverte
 # uniquement par montee_au_plan.sh, une fois par jour). Chaine a UN SEUL
 # job (contrairement au cycle Ventes a 3) - job terminal direct.

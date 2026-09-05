@@ -1,12 +1,12 @@
 #!/bin/bash
 # ECFCVTNT - ECF_VENTE_CYC_NETTOYAGE - 2e job du cycle TFJ Ventes
-# (voir ECFCVTRL pour le patron complet). IN_COND=TFJ_VENTES_RELANCE_OK
+# (voir ECFCRELVT1 pour le patron complet). IN_COND=TFJ_VENTES_RELANCE_OK
 # (jamais avant que la relance du jour ait tourne).
 #
 # Objectif metier reel : annuler automatiquement les devis (state=draft)
 # vieux de plus de 30 jours - nettoyage standard en exploitation ERP
 # reelle, evite un pipeline commercial pollue de devis morts. Chaque
-# devis annule est note dans le rapport ecrit par ECFCVTRP (job
+# devis annule est note dans le rapport ecrit par ECFCCLOVT1 (job
 # suivant), jamais silencieux. OUT_COND=TFJ_VENTES_NETTOYAGE_OK.
 set -uo pipefail
 source "$VARS_FILE"

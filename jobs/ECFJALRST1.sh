@@ -1,20 +1,20 @@
 #!/bin/bash
-# ECFJSTRU - ECF_STOCK_JOUR_RUPTURE - Job NRT reel (voir
+# ECFJALRST1 - ECF_STOCK_JOUR_RUPTURE - Job NRT reel (voir
 # bin/montee_au_plan.sh pour la taxonomie complete). IN_COND=STOCK_ACTIVE
-# (meme convention que ECFJVTSV/VENTE_ACTIVE - un job JOUR/NRT n'a pas de
+# (meme convention que ECFJALRVT1/VENTE_ACTIVE - un job JOUR/NRT n'a pas de
 # fenetre calendaire, seule la garantie que le module existe compte).
 #
-# DIFFERENT d'un job JOUR classique (comme ECFJVTSV, garde horaire
+# DIFFERENT d'un job JOUR classique (comme ECFJALRVT1, garde horaire
 # ouvree 8h-18h) : NRT est CONTINU par nature (voir taxonomie - "fil de
 # l'eau", une rupture de stock peut survenir a toute heure) - donc
-# AUCUNE garde horaire ici, contrairement a ECFJVTSV. La frequence reelle
+# AUCUNE garde horaire ici, contrairement a ECFJALRVT1. La frequence reelle
 # vient uniquement du minuteur periodique de l'orchestrateur (15 min).
 #
 # Objectif metier reel : liste les produits dont le stock disponible
 # reel (qty_available) est descendu a zero ou en dessous - alerte
 # precoce de rupture, jamais decouverte a la vente suivante. Rapport
 # ecrit dans $OPERATIONS_DIR/st/snd (sous-dossier canonique), seulement
-# s'il y a au moins une rupture (meme discipline que ECFJVTSV - pas de
+# s'il y a au moins une rupture (meme discipline que ECFJALRVT1 - pas de
 # fichier vide qui polluerait le dossier a chaque passage de
 # l'orchestrateur). OUT_COND=NONE.
 set -uo pipefail

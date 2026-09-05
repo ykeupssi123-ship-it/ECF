@@ -14,19 +14,19 @@
 #     CE SCRIPT NE GERE PAS CE TYPE : un job JOUR est un job Tier 1
 #     classique (OUT_COND=NONE), avec sa PROPRE garde horaire interne
 #     (verifie l'heure courante, ne fait rien hors plage) - voir
-#     jobs/ECFJVTSV.sh pour l'exemple reel construit.
+#     jobs/ECFJALRVT1.sh pour l'exemple reel construit.
 #   TFJ (Traitements de nuit) : sequence/batchs lourds, declenchee
 #     automatiquement a la fermeture (guichets/agences). Chaine
 #     d'orchestration de fin de journee : gel des transactions,
 #     reconciliations, sauvegardes a froid, calculs de soldes. C'EST CE
 #     QUE CE SCRIPT GERE (cadence DAILY ci-dessous) - voir le cycle
-#     Ventes (ECFCVTRL->ECFCVTNT->ECFCVTRP, TFJ_VENTES_*).
+#     Ventes (ECFCRELVT1->ECFCVTNT->ECFCCLOVT1, TFJ_VENTES_*).
 #   EOD (Echeance metier fin de journee) : horodate (ex. 23h50),
 #     quotidien - un MARQUEUR LOGIQUE unique (bascule de la date valeur
 #     comptable de J a J+1), jamais toute une chaine de jobs metier.
 #     CE SCRIPT NE GERE PAS CE TYPE non plus : un job EOD a son PROPRE
 #     minuteur systemd a heure fixe (23:50), pas la fenetre quotidienne
-#     00:05 de ce script - voir jobs/ECFCEOD1.sh et
+#     00:05 de ce script - voir jobs/ECFCCLOCP1.sh et
 #     setup/installer_service_eod_compta.sh.
 #   EOM (Echeance metier fin de mois) : calendaire (dernier jour du
 #     mois), mensuelle. Cloture mensuelle : paies, amortissements,

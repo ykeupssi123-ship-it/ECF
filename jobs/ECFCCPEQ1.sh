@@ -6,7 +6,7 @@
 #
 # DEPENDANCE METIER REELLE (catalogue, colonne "Depend de") : cette
 # declaration s'appuie sur les 3 clotures mensuelles du trimestre ecoule
-# (ECFCCPEM1) - meme raisonnement que ECFCCPEM1 vis-a-vis du cycle
+# (ECFCCLOCP2) - meme raisonnement que ECFCCLOCP2 vis-a-vis du cycle
 # quotidien : dependance METIER documentee, jamais une IN_COND technique
 # (le jalon COMPTA_EOM_TERMINE est remis a zero chaque mois par
 # montee_au_plan.sh, y compris le mois ou le trimestre se termine).

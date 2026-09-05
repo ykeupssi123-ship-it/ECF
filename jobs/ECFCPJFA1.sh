@@ -8,7 +8,7 @@
 # (account.analytic.line, issues des feuilles de temps du module
 # project) par projet pour le mois ecoule - base de facturation client,
 # jamais une facture generee automatiquement (decision humaine, meme
-# principe que ECFCVTRL/ECFCAHRA1 : ce job PROPOSE une base chiffree, ne
+# principe que ECFCRELVT1/ECFCAHRA1 : ce job PROPOSE une base chiffree, ne
 # declenche jamais lui-meme un acte commercial/financier). Rapport ecrit
 # dans $OPERATIONS_DIR/pj/snd (sous-dossier canonique).
 # OUT_COND=PROJETS_EOM_TERMINE (remis a zero par montee_au_plan.sh le

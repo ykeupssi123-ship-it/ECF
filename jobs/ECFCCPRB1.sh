@@ -1,7 +1,7 @@
 #!/bin/bash
 # ECFCCPRB1 - ECF_COMPTA_CYC_RECONBANK - 1er job du cycle TFJ Comptabilite
 # (voir bin/montee_au_plan.sh, meme patron que le cycle TFJ Ventes
-# ECFCVTRL/NT/RP). IN_COND=TFJ_COMPTA_WINDOW_OPEN (ouverte uniquement par
+# ECFCRELVT1/NT/RP). IN_COND=TFJ_COMPTA_WINDOW_OPEN (ouverte uniquement par
 # montee_au_plan.sh, une fois par jour).
 #
 # Objectif metier reel : detecte les lignes de releve bancaire

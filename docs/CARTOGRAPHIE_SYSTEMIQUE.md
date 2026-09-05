@@ -92,8 +92,8 @@ $ECFOP (/opt/odoo/operations)   zone d'echange par module : rcv/snd/tmp/arc
 | Exécution parallèle par vague | ✅ depuis le 4 septembre 2026 (`run_job_async`, `MAX_PARALLEL_JOBS`) |
 | SYSOUT / historique par exécution | ✅ `state/history/<JOB_ID>/`, `bin/view_history.sh` |
 | Calendrier TFJ/EOM/EOW/EOQ/EOY (chaînes auto-déclenchées) | ✅ `bin/montee_au_plan.sh` (`CYCLE_WINDOWS`, 5 cadences) + minuteurs systemd — 1 cycle TFJ réel construit (Ventes), 1 cycle PURGE (mensuel) |
-| EOD/CUTOFF (marqueur horodaté, heure fixe) | ✅ `ECFCEOD1` (Comptabilité, 23:50) et `ECFCCUT1` (Achat, 15h) — minuteur systemd dédié par marqueur, jamais celui de `montee_au_plan.sh` |
-| JOUR/NRT (intraday, garde horaire interne) | ✅ `ECFJVTSV` (Ventes) — job Tier 1 classique + garde horaire, fréquence réelle via le minuteur périodique de l'orchestrateur |
+| EOD/CUTOFF (marqueur horodaté, heure fixe) | ✅ `ECFCCLOCP1` (Comptabilité, 23:50) et `ECFCCUT1` (Achat, 15h) — minuteur systemd dédié par marqueur, jamais celui de `montee_au_plan.sh` |
+| JOUR/NRT (intraday, garde horaire interne) | ✅ `ECFJALRVT1` (Ventes) — job Tier 1 classique + garde horaire, fréquence réelle via le minuteur périodique de l'orchestrateur |
 | REPLAY (rejeu après incident) | ✅ déjà couvert — `bin/rerun_job.sh`/`bin/order_job.sh`, rien à construire |
 | PURGE (archivage à froid périodique) | ✅ `ECFCPRG1` — déplace les fichiers `$ECFOP/*/arc/` de plus de 90 jours vers `operations_archive_froide/` |
 | SIMULATION (stress test sur miroir) | ❌ absent — nécessite un environnement miroir/sandbox dédié, n'existe pas |
@@ -107,7 +107,7 @@ $ECFOP (/opt/odoo/operations)   zone d'echange par module : rcv/snd/tmp/arc
 
 Terminés : **CRM** (5 jobs), **Ventes** (3 jobs + 1 cycle TFJ de 3 jobs
 + 1 job JOUR), **Achat** (3 jobs + 1 marqueur CUTOFF). **Comptabilité**
-a son marqueur EOD (`ECFCEOD1`) mais pas encore ses jobs métier Tier 1
+a son marqueur EOD (`ECFCCLOCP1`) mais pas encore ses jobs métier Tier 1
 propres (création facture, etc.). Patron reproductible (voir
 `docs/CONVENTION_NOMMAGE.md`, section Tier 1) : un job générique par
 opération métier réelle, jamais un job par scénario de test — la
@@ -123,13 +123,13 @@ taxonomie complète JOUR/TFJ/EOD/EOW/EOM/EOQ/EOY/CUTOFF/REPLAY/PURGE/
 SIMULATION/REALTIME). Réel construit à ce jour :
 
 - **TFJ** (chaîne de nuit) : Ventes — clôture quotidienne
-  (`ECFCVTRL`→`ECFCVTNT`→`ECFCVTRP`).
+  (`ECFCRELVT1`→`ECFCVTNT`→`ECFCCLOVT1`).
 - **EOD** (marqueur horodaté) : Comptabilité — bascule de date valeur
-  (`ECFCEOD1`, 23:50, son propre minuteur).
+  (`ECFCCLOCP1`, 23:50, son propre minuteur).
 - **CUTOFF** (marqueur horodaté, un flux précis) : Achat — commandes
   fournisseurs (`ECFCCUT1`, 15h).
 - **JOUR/NRT** (intraday) : Ventes — suivi des devis envoyés
-  (`ECFJVTSV`, garde horaire 8h-18h).
+  (`ECFJALRVT1`, garde horaire 8h-18h).
 - **PURGE** (mensuel) : Système — archivage à froid de `$ECFOP/*/arc/`
   (`ECFCPRG1`).
 

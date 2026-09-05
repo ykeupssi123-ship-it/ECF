@@ -1,12 +1,12 @@
 #!/bin/bash
-# ECFCCPFI1 - ECF_COMPTA_CYC_RELANCEFACT - 2e et DERNIER job du cycle TFJ
+# ECFCRELCP1 - ECF_COMPTA_CYC_RELANCEFACT - 2e et DERNIER job du cycle TFJ
 # Comptabilite (voir ECFCCPRB1 pour le patron complet). IN_COND=TFJ_COMPTA_RECONBANK_OK.
 #
 # Objectif metier reel : detecte les factures client (account.move,
 # move_type=out_invoice, state=posted) dont l'echeance (invoice_date_due)
 # est depassee et qui ne sont pas encore payees (payment_state in
 # not_paid/partial) - jamais de relance email automatique ici (meme choix
-# que ECFCVTRL : aucune garantie qu'un serveur SMTP reel soit configure
+# que ECFCRELVT1 : aucune garantie qu'un serveur SMTP reel soit configure
 # sur toute instance), le rapport est ecrit pour qu'un comptable (ou un
 # futur job d'envoi) le traite. OUT_COND=TFJ_COMPTA_TERMINE - JOB QUI
 # MARQUE LA FIN DU CYCLE (remis a zero par montee_au_plan.sh le

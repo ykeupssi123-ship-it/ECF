@@ -1,7 +1,7 @@
 #!/bin/bash
 # ECFCCUT1 - ECF_ACHAT_CUTOFF_ORDRES - Marqueur CUTOFF reel (voir
 # bin/montee_au_plan.sh pour la taxonomie complete). Meme famille
-# structurelle qu'un marqueur EOD (voir ECFCEOD1.sh) - horodate, pas
+# structurelle qu'un marqueur EOD (voir ECFCCLOCP1.sh) - horodate, pas
 # une chaine - mais une heure LEGALE/METIER STRICTE propre a UN FLUX
 # (ici : commandes fournisseurs), pas la bascule comptable globale.
 #

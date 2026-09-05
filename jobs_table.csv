@@ -38,13 +38,13 @@ ECFBVTDE,ECF_VENTE_BLD_DEACTIVATE,ODOO_HOST,ALWAYS,ECFBVTDE.sh,Desactivation mod
 ECFRVTDV,ECF_VENTE_RUN_CREATEDEVIS,ODOO_HOST,ALWAYS,ECFRVTDV.sh,Cree un devis (une ou plusieurs lignes) depuis un CSV depose dans operations/vt/rcv (job repetable Tier 1),VENTE_ACTIVE,NONE,VT
 ECFRVTCF,ECF_VENTE_RUN_CONFIRMORDER,ODOO_HOST,ALWAYS,ECFRVTCF.sh,Confirme un devis existant en commande depuis un CSV depose dans operations/vt/rcv (job repetable Tier 1),VENTE_ACTIVE,NONE,VT
 ECFRVTIN,ECF_VENTE_RUN_CREATEINVOICE,ODOO_HOST,ALWAYS,ECFRVTIN.sh,Cree et valide la facture d une commande confirmee depuis un CSV depose dans operations/vt/rcv (job repetable Tier 1),VENTE_ACTIVE,NONE,VT
-ECFCVTRL,ECF_VENTE_CYC_RELANCE,ODOO_HOST,ALWAYS,ECFCVTRL.sh,Detecte les devis en attente depuis plus de 5 jours - 1er job du cycle TFJ Ventes,TFJ_VENTES_WINDOW_OPEN,TFJ_VENTES_RELANCE_OK,VT
+ECFCRELVT1,ECF_VENTE_CYC_RELANCE,ODOO_HOST,ALWAYS,ECFCRELVT1.sh,Detecte les devis en attente depuis plus de 5 jours - 1er job du cycle TFJ Ventes,TFJ_VENTES_WINDOW_OPEN,TFJ_VENTES_RELANCE_OK,VT
 ECFCVTNT,ECF_VENTE_CYC_NETTOYAGE,ODOO_HOST,ALWAYS,ECFCVTNT.sh,Annule les devis perimes depuis plus de 30 jours - 2e job du cycle TFJ Ventes,TFJ_VENTES_RELANCE_OK,TFJ_VENTES_NETTOYAGE_OK,VT
-ECFCVTRP,ECF_VENTE_CYC_RAPPORT,ODOO_HOST,ALWAYS,ECFCVTRP.sh,Rapport de fin de journee (commandes et CA du jour) - dernier job du cycle TFJ Ventes,TFJ_VENTES_NETTOYAGE_OK,TFJ_VENTES_TERMINE,VT
-ECFJVTSV,ECF_VENTE_JOUR_SUIVI,ODOO_HOST,ALWAYS,ECFJVTSV.sh,Suivi intraday des devis envoyes sans reponse depuis plus de 2h (job JOUR - garde horaire interne 8h-18h),VENTE_ACTIVE,NONE,VT
+ECFCCLOVT1,ECF_VENTE_CYC_RAPPORT,ODOO_HOST,ALWAYS,ECFCCLOVT1.sh,Rapport de fin de journee (commandes et CA du jour) - dernier job du cycle TFJ Ventes,TFJ_VENTES_NETTOYAGE_OK,TFJ_VENTES_TERMINE,VT
+ECFJALRVT1,ECF_VENTE_JOUR_SUIVI,ODOO_HOST,ALWAYS,ECFJALRVT1.sh,Suivi intraday des devis envoyes sans reponse depuis plus de 2h (job JOUR - garde horaire interne 8h-18h),VENTE_ACTIVE,NONE,VT
 ECFBCPAC,ECF_COMPTA_BLD_ACTIVATE,ODOO_HOST,ALWAYS,ECFBCPAC.sh,Activation module account : Facturation et comptabilite de base,ODOO_SYSTEME_PRET,COMPTA_ACTIVE,CP
 ECFBCPDE,ECF_COMPTA_BLD_DEACTIVATE,ODOO_HOST,ALWAYS,ECFBCPDE.sh,Desactivation module account : Facturation et comptabilite de base,COMPTA_ACTIVE,COMPTA_INACTIVE,CP
-ECFCEOD1,ECF_COMPTA_EOD_BASCULE,ODOO_HOST,ALWAYS,ECFCEOD1.sh,Marqueur EOD - bascule la date valeur comptable de J a J+1 (declenche a 23h50 par son propre minuteur),COMPTA_ACTIVE,NONE,CP
+ECFCCLOCP1,ECF_COMPTA_EOD_BASCULE,ODOO_HOST,ALWAYS,ECFCCLOCP1.sh,Marqueur EOD - bascule la date valeur comptable de J a J+1 (declenche a 23h50 par son propre minuteur),COMPTA_ACTIVE,NONE,CP
 ECFBAHAC,ECF_ACHAT_BLD_ACTIVATE,ODOO_HOST,ALWAYS,ECFBAHAC.sh,Activation module purchase : Commandes et appels d offres fournisseurs,ODOO_SYSTEME_PRET,ACHAT_ACTIVE,AH
 ECFBAHDE,ECF_ACHAT_BLD_DEACTIVATE,ODOO_HOST,ALWAYS,ECFBAHDE.sh,Desactivation module purchase : Commandes et appels d offres fournisseurs,ACHAT_ACTIVE,ACHAT_INACTIVE,AH
 ECFRAHPO,ECF_ACHAT_RUN_CREATEPO,ODOO_HOST,ALWAYS,ECFRAHPO.sh,Cree une commande fournisseur (une ou plusieurs lignes) depuis un CSV depose dans operations/ah/rcv (job repetable Tier 1),ACHAT_ACTIVE,NONE,AH
@@ -123,15 +123,15 @@ ECFRSOC3,ECF_ILL3_RUN_SOCIETE,ODOO_HOST,ALWAYS,ECFRSOC3.sh,Illustration : creati
 ECFRSTK3,ECF_ILL3_RUN_STOCK,ODOO_HOST,ALWAYS,ECFRSTK3.sh,Illustration : produits et stock initial PAIN & GLACE (remplace le suivi Excel),STOCK_ACTIVE|ILL3_SOCIETE_OK,ILL3_STOCK_OK,ILL3
 ECFRFAC3,ECF_ILL3_RUN_FACTUREMAIL,ODOO_HOST,ALWAYS,ECFRFAC3.sh,Illustration : facture PAIN & GLACE reelle envoyee par email,ODOO_MAIL_SERVER_REAL_OK|COMPTA_ACTIVE|ILL3_STOCK_OK,ILL3_FACTURE_OK,ILL3
 ECFCCPRB1,ECF_COMPTA_CYC_RECONBANK,ODOO_HOST,ALWAYS,ECFCCPRB1.sh,Detecte les lignes de releve bancaire non rapprochees depuis plus de 2 jours - 1er job du cycle TFJ Comptabilite,TFJ_COMPTA_WINDOW_OPEN,TFJ_COMPTA_RECONBANK_OK,CP
-ECFCCPFI1,ECF_COMPTA_CYC_RELANCEFACT,ODOO_HOST,ALWAYS,ECFCCPFI1.sh,Detecte les factures client impayees en retard d'echeance - dernier job du cycle TFJ Comptabilite,TFJ_COMPTA_RECONBANK_OK,TFJ_COMPTA_TERMINE,CP
-ECFCCPEM1,ECF_COMPTA_CYC_CLOTUREMENSUELLE,ODOO_HOST,ALWAYS,ECFCCPEM1.sh,Cloture comptable mensuelle - CA facture/encaisse/balance agee du mois ecoule (cycle EOM),COMPTA_EOM_WINDOW_OPEN,COMPTA_EOM_TERMINE,CP
+ECFCRELCP1,ECF_COMPTA_CYC_RELANCEFACT,ODOO_HOST,ALWAYS,ECFCRELCP1.sh,Detecte les factures client impayees en retard d'echeance - dernier job du cycle TFJ Comptabilite,TFJ_COMPTA_RECONBANK_OK,TFJ_COMPTA_TERMINE,CP
+ECFCCLOCP2,ECF_COMPTA_CYC_CLOTUREMENSUELLE,ODOO_HOST,ALWAYS,ECFCCLOCP2.sh,Cloture comptable mensuelle - CA facture/encaisse/balance agee du mois ecoule (cycle EOM),COMPTA_EOM_WINDOW_OPEN,COMPTA_EOM_TERMINE,CP
 ECFCCPEQ1,ECF_COMPTA_CYC_DECLARTVA,ODOO_HOST,ALWAYS,ECFCCPEQ1.sh,Declaration TVA trimestrielle simplifiee - TVA collectee/deductible/nette du trimestre ecoule (cycle EOQ),COMPTA_EOQ_WINDOW_OPEN,COMPTA_EOQ_TERMINE,CP
-ECFCVTEM1,ECF_VENTE_CYC_CLOTUREMENSUELLE,ODOO_HOST,ALWAYS,ECFCVTEM1.sh,Cloture commerciale mensuelle - CA et repartition par commercial du mois ecoule (cycle EOM),VENTES_EOM_WINDOW_OPEN,VENTES_EOM_TERMINE,VT
-ECFCCRRL1,ECF_CRM_CYC_RELANCE,ODOO_HOST,ALWAYS,ECFCCRRL1.sh,Detecte les pistes commerciales stagnantes depuis plus de 7 jours (cycle TFJ CRM),TFJ_CRM_WINDOW_OPEN,TFJ_CRM_TERMINE,CR
+ECFCCLOVT2,ECF_VENTE_CYC_CLOTUREMENSUELLE,ODOO_HOST,ALWAYS,ECFCCLOVT2.sh,Cloture commerciale mensuelle - CA et repartition par commercial du mois ecoule (cycle EOM),VENTES_EOM_WINDOW_OPEN,VENTES_EOM_TERMINE,VT
+ECFCRELCR1,ECF_CRM_CYC_RELANCE,ODOO_HOST,ALWAYS,ECFCRELCR1.sh,Detecte les pistes commerciales stagnantes depuis plus de 7 jours (cycle TFJ CRM),TFJ_CRM_WINDOW_OPEN,TFJ_CRM_TERMINE,CR
 ECFCAHRA1,ECF_ACHAT_CYC_REAPPRO,ODOO_HOST,ALWAYS,ECFCAHRA1.sh,Propose les reapprovisionnements sous le seuil minimum de stock (cycle TFJ Achat),TFJ_ACHAT_WINDOW_OPEN,TFJ_ACHAT_TERMINE,AH
-ECFJSTRU,ECF_STOCK_JOUR_RUPTURE,ODOO_HOST,ALWAYS,ECFJSTRU.sh,Alerte les produits en rupture de stock en temps quasi-reel (job NRT),STOCK_ACTIVE,NONE,ST
+ECFJALRST1,ECF_STOCK_JOUR_RUPTURE,ODOO_HOST,ALWAYS,ECFJALRST1.sh,Alerte les produits en rupture de stock en temps quasi-reel (job NRT),STOCK_ACTIVE,NONE,ST
 ECFCSTIN1,ECF_STOCK_CYC_INVENTAIRE,ODOO_HOST,ALWAYS,ECFCSTIN1.sh,Valorisation nocturne du stock disponible (cycle TFJ Stock),TFJ_STOCK_WINDOW_OPEN,TFJ_STOCK_TERMINE,ST
-ECFCPSCX1,ECF_PDV_CYC_CLOTURECAISSE,ODOO_HOST,ALWAYS,ECFCPSCX1.sh,Rapport de cloture de caisse des sessions fermees aujourd'hui (cycle TFJ Point de vente),TFJ_PDV_WINDOW_OPEN,TFJ_PDV_TERMINE,PS
-ECFCRHFC1,ECF_RH_CYC_FINCONTRAT,ODOO_HOST,ALWAYS,ECFCRHFC1.sh,Alerte les contrats arrivant a echeance sous 30 jours (cycle TFJ RH),TFJ_RH_WINDOW_OPEN,TFJ_RH_TERMINE,RH
+ECFCCLOPS1,ECF_PDV_CYC_CLOTURECAISSE,ODOO_HOST,ALWAYS,ECFCCLOPS1.sh,Rapport de cloture de caisse des sessions fermees aujourd'hui (cycle TFJ Point de vente),TFJ_PDV_WINDOW_OPEN,TFJ_PDV_TERMINE,PS
+ECFCALRRH1,ECF_RH_CYC_FINCONTRAT,ODOO_HOST,ALWAYS,ECFCALRRH1.sh,Alerte les contrats arrivant a echeance sous 30 jours (cycle TFJ RH),TFJ_RH_WINDOW_OPEN,TFJ_RH_TERMINE,RH
 ECFCPNHM1,ECF_PRESENCES_CYC_HEURESMOIS,ODOO_HOST,ALWAYS,ECFCPNHM1.sh,Calcule les heures travaillees du mois ecoule par employe - base paie (cycle EOM Presences),PRESENCES_EOM_WINDOW_OPEN,PRESENCES_EOM_TERMINE,PN
 ECFCPJFA1,ECF_PROJETS_CYC_FACTURATION,ODOO_HOST,ALWAYS,ECFCPJFA1.sh,Consolide les heures de temps passe par projet du mois ecoule - base facturation (cycle EOM Projets),PROJETS_EOM_WINDOW_OPEN,PROJETS_EOM_TERMINE,PJ

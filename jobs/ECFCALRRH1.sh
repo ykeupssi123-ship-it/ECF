@@ -1,5 +1,5 @@
 #!/bin/bash
-# ECFCRHFC1 - ECF_RH_CYC_FINCONTRAT - Cycle TFJ RH (voir
+# ECFCALRRH1 - ECF_RH_CYC_FINCONTRAT - Cycle TFJ RH (voir
 # bin/montee_au_plan.sh). IN_COND=TFJ_RH_WINDOW_OPEN. Chaine a UN SEUL
 # job - terminal direct.
 #

@@ -955,8 +955,8 @@ jugé disproportionné pour le bénéfice. Voir
 `docs/CONVENTION_NOMMAGE.md`, section "Cycles calendaires".
 
 **Exemple réel construit** (pas un exemple abstrait) : cycle EOD
-Ventes, `ECFCVTRL` (détecte les devis en attente > 5 jours) →
-`ECFCVTNT` (annule les devis périmés > 30 jours) → `ECFCVTRP` (rapport
+Ventes, `ECFCRELVT1` (détecte les devis en attente > 5 jours) →
+`ECFCVTNT` (annule les devis périmés > 30 jours) → `ECFCCLOVT1` (rapport
 de fin de journée, job qui marque la fin du traitement,
 `OUT_COND=EOD_VENTES_TERMINE`).
 
@@ -970,7 +970,7 @@ d'ouverture antidaté) - confirmé : nouvel archivage, nouvelle
 ouverture. Ce qui reste à confirmer sur une vraie VM : le comportement
 réel des minuteurs systemd sur la durée (jamais testé au-delà d'une
 exécution manuelle du script), et le contenu métier réel des rapports
-Odoo (`ECFCVTRL`/`ECFCVTRP`) contre une vraie base.
+Odoo (`ECFCRELVT1`/`ECFCCLOVT1`) contre une vraie base.
 
 ---
 
@@ -980,18 +980,18 @@ Erreur trouvée par relecture utilisateur : le premier cycle construit
 avait été nommé `EOD_VENTES_*` — or EOD, dans le vocabulaire réel
 fourni, désigne un **marqueur logique unique et horodaté** (bascule de
 la date valeur comptable), jamais toute une chaîne de plusieurs jobs.
-Ce que j'avais construit (`ECFCVTRL`→`ECFCVTNT`→`ECFCVTRP`) est
+Ce que j'avais construit (`ECFCRELVT1`→`ECFCVTNT`→`ECFCCLOVT1`) est
 structurellement un **TFJ** (chaîne de nuit, déclenchée à la fermeture,
 se terminant seule). Renommé partout (`jobs_table.csv`,
 `bin/montee_au_plan.sh`, les 3 scripts) : `TFJ_VENTES_*`.
 
 **Deux nouveaux exemples réels construits pour ne pas laisser les
 termes mal employés** :
-- `ECFCEOD1` (`ECF_COMPTA_EOD_BASCULE`) — un vrai marqueur EOD, son
+- `ECFCCLOCP1` (`ECF_COMPTA_EOD_BASCULE`) — un vrai marqueur EOD, son
   propre minuteur systemd à heure fixe (23:50,
   `setup/installer_service_eod_compta.sh`), jamais celui de
   `montee_au_plan.sh` (00:05, réservé aux fenêtres TFJ/EOM).
-- `ECFJVTSV` (`ECF_VENTE_JOUR_SUIVI`) — un vrai job JOUR (suivi
+- `ECFJALRVT1` (`ECF_VENTE_JOUR_SUIVI`) — un vrai job JOUR (suivi
   intraday des devis envoyés sans réponse), `OUT_COND=NONE` + garde
   horaire interne (8h-18h) plutôt qu'un mécanisme de fenêtre dédié — la
   fréquence vient du minuteur périodique de l'orchestrateur (15 min).
@@ -1047,14 +1047,14 @@ mécanisme de cadence appliqué à un cycle métier) :
 - Cycle TFJ Comptabilité (nouveau, 2 jobs) : `ECFCCPRB1`
   (`ECF_COMPTA_CYC_RECONBANK`, réconciliation bancaire — lignes
   `account.bank.statement.line` non rapprochées depuis plus de 2
-  jours) → `ECFCCPFI1` (`ECF_COMPTA_CYC_RELANCEFACT`, terminal —
+  jours) → `ECFCRELCP1` (`ECF_COMPTA_CYC_RELANCEFACT`, terminal —
   factures `account.move` impayées en retard d'échéance). Nouvelle
   entrée `CYCLE_WINDOWS` : `TFJ_COMPTA_WINDOW_OPEN` (`DAILY`).
-- `ECFCCPEM1` (`ECF_COMPTA_CYC_CLOTUREMENSUELLE`) — première clôture
+- `ECFCCLOCP2` (`ECF_COMPTA_CYC_CLOTUREMENSUELLE`) — première clôture
   mensuelle réelle : CA facturé, montant encaissé, balance âgée des
   impayées du mois écoulé. Nouvelle entrée `COMPTA_EOM_WINDOW_OPEN`
   (`MONTHLY`).
-- `ECFCVTEM1` (`ECF_VENTE_CYC_CLOTUREMENSUELLE`) — clôture commerciale
+- `ECFCCLOVT2` (`ECF_VENTE_CYC_CLOTUREMENSUELLE`) — clôture commerciale
   mensuelle : CA confirmé et répartition par commercial (base
   commissions) du mois écoulé. Nouvelle entrée
   `VENTES_EOM_WINDOW_OPEN` (`MONTHLY`).
@@ -1079,7 +1079,7 @@ ces dépendances restent des dépendances MÉTIER documentées (colonne
 "Depend de" du catalogue), jamais des `IN_COND` techniques inventées
 pour faire semblant de les exprimer — l'assurance réelle vient du
 suivi opérationnel (`state/JOBS_HISTORY.csv`). Documenté en tête de
-`ECFCCPEM1.sh`/`ECFCCPEQ1.sh`/`ECFCVTEM1.sh`.
+`ECFCCLOCP2.sh`/`ECFCCPEQ1.sh`/`ECFCCLOVT2.sh`.
 
 **Vérifications réelles effectuées** : `bash -n` sur les 5 scripts et
 `bin/montee_au_plan.sh` ; `bin/verifier_independance_modules.sh` →
@@ -1113,7 +1113,7 @@ même passage du catalogue.
 pratique SGABS de l'utilisateur — SM2/RCV, SND_BNK, ARC_BNK) impose une
 structure canonique unique par module : `$OPERATIONS_DIR/<code>/{rcv,snd,tmp,arc}`,
 "jamais une seconde liste maintenue à la main". Le lot du 2026-09-04
-(`ECFCCPRB1`, `ECFCCPEM1`, `ECFCCPEQ1`, `ECFCVTEM1`) avait pourtant
+(`ECFCCPRB1`, `ECFCCLOCP2`, `ECFCCPEQ1`, `ECFCCLOVT2`) avait pourtant
 introduit deux sous-dossiers hors de cette liste (`rec`, `cloture`) —
 trouvé en relisant `ECFBOPD.sh` avant de construire ce deuxième lot, corrigé
 immédiatement : ces 4 scripts écrivent désormais dans `snd` (fichiers
@@ -1122,14 +1122,14 @@ aussi dans deux commentaires (jamais une vraie variable du projet) —
 remplacé par `$OPERATIONS_DIR`, le seul nom réel.
 
 **Construit** (8 jobs, 7 nouvelles fenêtres calendaires) :
-- `ECFCCRRL1` (CRM, TFJ) — pistes (`crm.lead`, type=lead) sans activité
+- `ECFCRELCR1` (CRM, TFJ) — pistes (`crm.lead`, type=lead) sans activité
   depuis plus de 7 jours.
 - `ECFCAHRA1` (Achat, TFJ) — produits sous leur seuil de
   réapprovisionnement (`stock.warehouse.orderpoint`, fonctionnalité
   native) : PROPOSE une liste, ne crée aucune commande fournisseur
   automatiquement.
-- `ECFJSTRU` (Stock, NRT — pas de fenêtre calendaire, `IN_COND=STOCK_ACTIVE`
-  comme `ECFJVTSV`/`VENTE_ACTIVE`) — produits en rupture
+- `ECFJALRST1` (Stock, NRT — pas de fenêtre calendaire, `IN_COND=STOCK_ACTIVE`
+  comme `ECFJALRVT1`/`VENTE_ACTIVE`) — produits en rupture
   (`qty_available <= 0`), aucune garde horaire (NRT est continu par
   nature, contrairement à JOUR).
 - `ECFCSTIN1` (Stock, TFJ) — **rebaptisé "Valorisation nocturne du
@@ -1138,11 +1138,11 @@ remplacé par `$OPERATIONS_DIR`, le seul nom réel.
   terrain — construit honnêtement le sous-ensemble réalisable
   (valorisation à partir du stock système), jamais présenté comme
   l'opération complète d'origine.
-- `ECFCPSCX1` (Point de vente, TFJ) — rapport de synthèse des sessions
+- `ECFCCLOPS1` (Point de vente, TFJ) — rapport de synthèse des sessions
   de caisse (`pos.session`) fermées le jour même ; ne duplique jamais le
   rapprochement espèces/carte, déjà fait par l'écran de fermeture Odoo
   lui-même.
-- `ECFCRHFC1` (RH, TFJ) — contrats (`hr.contract.date_end`) à échéance
+- `ECFCALRRH1` (RH, TFJ) — contrats (`hr.contract.date_end`) à échéance
   sous 30 jours.
 - `ECFCPNHM1` (Présences, EOM) — heures travaillées du mois écoulé par
   employé (`hr.attendance`), base de calcul paie (la paie CALCULÉE

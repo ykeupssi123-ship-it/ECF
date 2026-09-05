@@ -1,14 +1,14 @@
 #!/bin/bash
-# ECFCVTEM1 - ECF_VENTE_CYC_CLOTUREMENSUELLE - Cloture commerciale
+# ECFCCLOVT2 - ECF_VENTE_CYC_CLOTUREMENSUELLE - Cloture commerciale
 # mensuelle (voir bin/montee_au_plan.sh, cadence MONTHLY,
 # IN_COND=VENTES_EOM_WINDOW_OPEN - ouverte le 1er de chaque mois, pour le
 # mois qui vient de se terminer).
 #
 # DEPENDANCE METIER REELLE (catalogue, colonne "Depend de") : cette
-# cloture s'appuie sur le cycle TFJ Ventes quotidien (ECFCVTRL/NT/RP)
+# cloture s'appuie sur le cycle TFJ Ventes quotidien (ECFCRELVT1/NT/RP)
 # ayant tourne chaque jour du mois - meme raisonnement documente que
-# ECFCCPEM1 cote Comptabilite : dependance METIER, jamais une IN_COND
-# technique (voir ECFCCPEM1.sh pour l'explication complete du choix).
+# ECFCCLOCP2 cote Comptabilite : dependance METIER, jamais une IN_COND
+# technique (voir ECFCCLOCP2.sh pour l'explication complete du choix).
 #
 # Objectif metier reel : chiffre d'affaires confirme du mois ecoule et
 # repartition par commercial (base de calcul des commissions) - le calcul

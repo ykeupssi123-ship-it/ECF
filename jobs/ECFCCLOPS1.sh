@@ -1,5 +1,5 @@
 #!/bin/bash
-# ECFCPSCX1 - ECF_PDV_CYC_CLOTURECAISSE - Cycle TFJ Point de vente (voir
+# ECFCCLOPS1 - ECF_PDV_CYC_CLOTURECAISSE - Cycle TFJ Point de vente (voir
 # bin/montee_au_plan.sh). IN_COND=TFJ_PDV_WINDOW_OPEN. Chaine a UN SEUL
 # job - terminal direct.
 #

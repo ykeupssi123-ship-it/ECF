@@ -1,9 +1,9 @@
 #!/bin/bash
-# ECFCEOD1 - ECF_COMPTA_EOD_BASCULE - Marqueur EOD reel (voir
+# ECFCCLOCP1 - ECF_COMPTA_EOD_BASCULE - Marqueur EOD reel (voir
 # bin/montee_au_plan.sh pour la taxonomie complete JOUR/TFJ/EOD/EOM).
 #
 # DIFFERENT d'un cycle TFJ (chaine de plusieurs jobs, voir
-# ECFCVTRL/NT/RP) : EOD est un marqueur LOGIQUE UNIQUE, horodate (ici
+# ECFCRELVT1/NT/RP) : EOD est un marqueur LOGIQUE UNIQUE, horodate (ici
 # 23:50 - voir setup/installer_service_eod_compta.sh, minuteur DEDIE,
 # jamais celui de montee_au_plan.sh qui ouvre les cycles TFJ a 00:05).
 # Role reel : basculer la date valeur comptable courante de J a J+1 -

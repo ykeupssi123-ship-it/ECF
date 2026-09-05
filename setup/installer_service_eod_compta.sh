@@ -2,7 +2,7 @@
 # installer_service_eod_compta.sh - AJOUTE LE 2026-09-04 (correction
 # de taxonomie - EOD est un marqueur horodate unique, JAMAIS le meme
 # minuteur que les cycles TFJ ouverts par ecf-montee-au-plan.timer a
-# 00:05). Declenche ECFCEOD1 (bascule de la date valeur comptable J->J+1)
+# 00:05). Declenche ECFCCLOCP1 (bascule de la date valeur comptable J->J+1)
 # a heure fixe, 23:50 par defaut - AVANT le minuteur TFJ suivant, jamais
 # apres (l'ordre reel : fermeture -> EOD -> TFJ de la nuit).
 #
@@ -23,10 +23,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SERVICE_PATH="/etc/systemd/system/ecf-eod-compta.service"
 TIMER_PATH="/etc/systemd/system/ecf-eod-compta.timer"
 
-echo "[installer_service_eod_compta] Installation pour : ${SCRIPT_DIR}/jobs/ECFCEOD1.sh"
+echo "[installer_service_eod_compta] Installation pour : ${SCRIPT_DIR}/jobs/ECFCCLOCP1.sh"
 
-if [ ! -f "${SCRIPT_DIR}/jobs/ECFCEOD1.sh" ]; then
-  echo "ERREUR : ${SCRIPT_DIR}/jobs/ECFCEOD1.sh introuvable." >&2
+if [ ! -f "${SCRIPT_DIR}/jobs/ECFCCLOCP1.sh" ]; then
+  echo "ERREUR : ${SCRIPT_DIR}/jobs/ECFCCLOCP1.sh introuvable." >&2
   exit 1
 fi
 
@@ -39,7 +39,7 @@ After=multi-user.target
 Type=oneshot
 WorkingDirectory=${SCRIPT_DIR}
 Environment=VARS_FILE=${SCRIPT_DIR}/vars.conf
-ExecStart=${SCRIPT_DIR}/jobs/ECFCEOD1.sh
+ExecStart=${SCRIPT_DIR}/jobs/ECFCCLOCP1.sh
 User=root
 UNITEOF
 

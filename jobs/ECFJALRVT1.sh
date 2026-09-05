@@ -1,5 +1,5 @@
 #!/bin/bash
-# ECFJVTSV - ECF_VENTE_JOUR_SUIVI - Job JOUR reel (voir
+# ECFJALRVT1 - ECF_VENTE_JOUR_SUIVI - Job JOUR reel (voir
 # bin/montee_au_plan.sh pour la taxonomie complete JOUR/TFJ/EOD/EOM).
 #
 # DIFFERENT d'un job Tier 1 classique ou d'un cycle TFJ : un job JOUR

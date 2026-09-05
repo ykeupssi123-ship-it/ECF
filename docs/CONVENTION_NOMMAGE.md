@@ -241,7 +241,7 @@ avait été nommé `EOD_VENTES_*` alors qu'il s'agit structurellement d'un
 seuls, pas un marqueur horodaté unique) — renommé `TFJ_VENTES_*`
 partout (`jobs_table.csv`, `bin/montee_au_plan.sh`, les 3 scripts de
 la chaîne). Un vrai marqueur EOD a été construit séparément
-(`ECFCEOD1`, voir plus bas) pour ne pas laisser le terme mal employé.
+(`ECFCCLOCP1`, voir plus bas) pour ne pas laisser le terme mal employé.
 
 - **`bin/montee_au_plan.sh`** (équivalent New Day/Active Plan
   Control-M) — pour chaque cycle enregistré dans son registre
@@ -254,8 +254,8 @@ la chaîne). Un vrai marqueur EOD a été construit séparément
   fait rien après la première fois. Écrit un instantané daté,
   `state/plan/<date>.csv` — LE plan du jour, consultable.
   **Ne gère PAS** : JOUR/NRT (job Tier 1 classique + garde horaire
-  interne, voir `ECFJVTSV.sh`), EOD (marqueur horodaté, son propre
-  minuteur à heure fixe, voir `ECFCEOD1.sh`), CUTOFF (même principe
+  interne, voir `ECFJALRVT1.sh`), EOD (marqueur horodaté, son propre
+  minuteur à heure fixe, voir `ECFCCLOCP1.sh`), CUTOFF (même principe
   qu'EOD, une heure stricte plutôt qu'une fenêtre quotidienne).
 - Les jobs de chaîne (TFJ/EOM/EOW/EOQ/EOY) utilisent des **`OUT_COND`
   réels** (pas `NONE`) — un vrai jalon persistant, remis à zéro
@@ -279,9 +279,9 @@ la chaîne). Un vrai marqueur EOD a été construit séparément
 
 ### Exemple réel construit : cycle TFJ Ventes
 
-`ECFCVTRL` (détecte les devis en attente > 5 jours, rapport dans
+`ECFCRELVT1` (détecte les devis en attente > 5 jours, rapport dans
 `$ECFOP/vt/snd`) → `ECFCVTNT` (annule les devis périmés > 30 jours) →
-`ECFCVTRP` (rapport de fin de journée : commandes et CA du jour,
+`ECFCCLOVT1` (rapport de fin de journée : commandes et CA du jour,
 `OUT_COND=TFJ_VENTES_TERMINE` — le job qui marque la fin du
 traitement). Vérifié par un harnais de simulation isolé (jamais
 commité) : ouverture, idempotence le même jour, archivage et
@@ -290,7 +290,7 @@ d'ouverture, jamais en trafiquant l'horloge système).
 
 ### Exemple réel construit : marqueur EOD Comptabilité
 
-`ECFCEOD1` (`ECF_COMPTA_EOD_BASCULE`) — bascule la date valeur
+`ECFCCLOCP1` (`ECF_COMPTA_EOD_BASCULE`) — bascule la date valeur
 comptable courante de J à J+1, écrit un audit (`state/EOD_BASCULES_AUDIT.csv`),
 idempotent par construction interne (vérifie la date déjà marquée,
 jamais un jalon permanent remis à zéro par `montee_au_plan.sh` — ce
@@ -300,7 +300,7 @@ minuteur systemd, `ecf-eod-compta.timer` (23:50) — voir
 
 ### Exemple réel construit : job JOUR (intraday) Ventes
 
-`ECFJVTSV` (`ECF_VENTE_JOUR_SUIVI`) — suivi des devis envoyés au client
+`ECFJALRVT1` (`ECF_VENTE_JOUR_SUIVI`) — suivi des devis envoyés au client
 sans réponse depuis plus de 2h, pendant les heures ouvrées (8h-18h,
 garde horaire interne). `OUT_COND=NONE` comme un job Tier 1 classique
 — la fréquence réelle vient du minuteur périodique de l'orchestrateur
@@ -310,16 +310,16 @@ BROUILLON, jamais envoyés).
 
 ### Exemples réels construits : cycle TFJ Comptabilité + EOM (Comptabilité et Ventes) + EOQ (le 4 septembre 2026, chantier "anticipation" — construction depuis le catalogue des opérations avec dépendances et calendrier réels)
 
-Deuxième cycle TFJ construit, même patron que Ventes (`ECFCVTRL/NT/RP`) :
+Deuxième cycle TFJ construit, même patron que Ventes (`ECFCRELVT1/NT/RP`) :
 `ECFCCPRB1` (`ECF_COMPTA_CYC_RECONBANK`, `IN_COND=TFJ_COMPTA_WINDOW_OPEN`) →
-`ECFCCPFI1` (`ECF_COMPTA_CYC_RELANCEFACT`, job terminal,
+`ECFCRELCP1` (`ECF_COMPTA_CYC_RELANCEFACT`, job terminal,
 `OUT_COND=TFJ_COMPTA_TERMINE`). Nouvelle entrée `CYCLE_WINDOWS` :
 `TFJ_COMPTA_WINDOW_OPEN` (cadence `DAILY`).
 
 Premiers exemples réels de cadence `MONTHLY` appliqués à un cycle
 métier (jusqu'ici seule `PURGE_ARC_WINDOW_OPEN` l'utilisait, hors cycle
-métier) : `ECFCCPEM1` (`ECF_COMPTA_CYC_CLOTUREMENSUELLE`,
-`COMPTA_EOM_WINDOW_OPEN`) et `ECFCVTEM1`
+métier) : `ECFCCLOCP2` (`ECF_COMPTA_CYC_CLOTUREMENSUELLE`,
+`COMPTA_EOM_WINDOW_OPEN`) et `ECFCCLOVT2`
 (`ECF_VENTE_CYC_CLOTUREMENSUELLE`, `VENTES_EOM_WINDOW_OPEN`).
 
 Premier exemple réel de cadence `QUARTERLY` appliqué à un cycle métier :
@@ -340,7 +340,7 @@ tourné pendant toute la période relève du suivi opérationnel
 (`state/JOBS_HISTORY.csv`, `bin/view_history.sh`), jamais d'un verrou
 de planification qu'aucun ordonnanceur calendaire (Control-M compris)
 n'exprime réellement de cette façon. Détail complet dans l'en-tête de
-`jobs/ECFCCPEM1.sh` et `jobs/ECFCCPEQ1.sh`.
+`jobs/ECFCCLOCP2.sh` et `jobs/ECFCCPEQ1.sh`.
 
 ### Ce qui reste à construire (roadmap honnête)
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-# ECFCCPEM1 - ECF_COMPTA_CYC_CLOTUREMENSUELLE - Cloture comptable mensuelle
+# ECFCCLOCP2 - ECF_COMPTA_CYC_CLOTUREMENSUELLE - Cloture comptable mensuelle
 # (voir bin/montee_au_plan.sh, cadence MONTHLY, IN_COND=COMPTA_EOM_WINDOW_OPEN
 # - ouverte le 1er de chaque mois, pour le mois qui vient de se terminer,
 # meme raisonnement que TFJ_VENTES_WINDOW_OPEN ouverte a 00:05 "pour le
@@ -7,7 +7,7 @@
 #
 # DEPENDANCE METIER REELLE (catalogue des operations, colonne "Depend de") :
 # cette cloture n'a de sens que si la reconciliation bancaire quotidienne
-# (ECFCCPRB1) et le marqueur EOD (ECFCEOD1) ont bien tourne chaque jour du
+# (ECFCCPRB1) et le marqueur EOD (ECFCCLOCP1) ont bien tourne chaque jour du
 # mois - mais ceci reste une DEPENDANCE METIER DOCUMENTEE, jamais une
 # IN_COND technique : la fenetre TFJ_COMPTA_WINDOW_OPEN est remise a zero
 # CHAQUE jour par montee_au_plan.sh (y compris le jour meme ou la fenetre

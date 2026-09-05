@@ -9,7 +9,7 @@
 # disponible est descendu sous le minimum defini. PROPOSE une liste
 # (rapport), ne cree AUCUNE commande fournisseur automatiquement - une
 # creation reelle de bon de commande reste une decision humaine, meme
-# principe que ECFCVTRL qui ne relance jamais un client par email tout
+# principe que ECFCRELVT1 qui ne relance jamais un client par email tout
 # seul. OUT_COND=TFJ_ACHAT_TERMINE (REEL, remis a zero par
 # montee_au_plan.sh le cycle suivant).
 set -uo pipefail

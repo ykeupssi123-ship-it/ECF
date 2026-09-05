@@ -1,6 +1,6 @@
 #!/bin/bash
-# ECFCVTRP - ECF_VENTE_CYC_RAPPORT - 3e et DERNIER job du cycle TFJ
-# Ventes (voir ECFCVTRL pour le patron complet). IN_COND=TFJ_VENTES_NETTOYAGE_OK.
+# ECFCCLOVT1 - ECF_VENTE_CYC_RAPPORT - 3e et DERNIER job du cycle TFJ
+# Ventes (voir ECFCRELVT1 pour le patron complet). IN_COND=TFJ_VENTES_NETTOYAGE_OK.
 #
 # Objectif metier reel : rapport de fin de journee (commandes
 # confirmees aujourd'hui, chiffre d'affaires du jour) - ecrit dans

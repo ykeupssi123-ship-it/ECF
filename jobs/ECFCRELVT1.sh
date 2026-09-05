@@ -1,5 +1,5 @@
 #!/bin/bash
-# ECFCVTRL - ECF_VENTE_CYC_RELANCE - Premier job du cycle TFJ Ventes
+# ECFCRELVT1 - ECF_VENTE_CYC_RELANCE - Premier job du cycle TFJ Ventes
 # (voir bin/montee_au_plan.sh, docs/CONVENTION_NOMMAGE.md section
 # "Cycles calendaires"). IN_COND=TFJ_VENTES_WINDOW_OPEN (ouverte
 # uniquement par montee_au_plan.sh, une fois par jour).
