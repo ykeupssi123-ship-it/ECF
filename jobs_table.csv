@@ -135,3 +135,15 @@ ECFCCLOPS1,ECF_PDV_CYC_CLOTURECAISSE,ODOO_HOST,ALWAYS,ECFCCLOPS1.sh,Rapport de c
 ECFCALRRH1,ECF_RH_CYC_FINCONTRAT,ODOO_HOST,ALWAYS,ECFCALRRH1.sh,Alerte les contrats arrivant a echeance sous 30 jours (cycle TFJ RH),TFJ_RH_WINDOW_OPEN,TFJ_RH_TERMINE,RH
 ECFCPNHM1,ECF_PRESENCES_CYC_HEURESMOIS,ODOO_HOST,ALWAYS,ECFCPNHM1.sh,Calcule les heures travaillees du mois ecoule par employe - base paie (cycle EOM Presences),PRESENCES_EOM_WINDOW_OPEN,PRESENCES_EOM_TERMINE,PN
 ECFCPJFA1,ECF_PROJETS_CYC_FACTURATION,ODOO_HOST,ALWAYS,ECFCPJFA1.sh,Consolide les heures de temps passe par projet du mois ecoule - base facturation (cycle EOM Projets),PROJETS_EOM_WINDOW_OPEN,PROJETS_EOM_TERMINE,PJ
+ECFJSCORCR1,ECF_CRM_JOUR_SCORING,ODOO_HOST,ALWAYS,ECFJSCORCR1.sh,Calcule un score de qualification simple (0-3) sur les pistes actives et met a jour leur priorite (job NRT continu),CRM_ACTIVE,NONE,CR
+ECFCCLOCR1,ECF_CRM_CYC_PIPELINEHEBDO,ODOO_HOST,ALWAYS,ECFCCLOCR1.sh,Bilan hebdomadaire du pipeline commercial (nouvelles pistes - gagnees - perdues - valeur du pipeline ouvert) - cycle EOW,CRM_EOW_WINDOW_OPEN,CRM_EOW_TERMINE,CR
+ECFJALRRP1,ECF_REPAIR_JOUR_AVANCEMENT,ODOO_HOST,ALWAYS,ECFJALRRP1.sh,Notifie le client des changements d'etape de sa reparation (prise en charge - terminee) - job JOUR (garde horaire 8h-18h),REPAIR_ACTIVE,NONE,RP
+ECFCCLORP1,ECF_REPAIR_CYC_RAPPORTSAV,ODOO_HOST,ALWAYS,ECFCCLORP1.sh,Point quotidien sur les reparations en cours et terminees le jour meme - cycle TFJ,REPAIR_TFJ_WINDOW_OPEN,REPAIR_TFJ_TERMINE,RP
+ECFCALRFL1,ECF_FLEET_CYC_ALERTEECHEANCE,ODOO_HOST,ALWAYS,ECFCALRFL1.sh,Alerte avant qu'une assurance ou un controle technique vehicule n'expire sous 30 jours - cycle JOUR,FLOTTE_JOUR_WINDOW_OPEN,FLOTTE_JOUR_TERMINE,FL
+ECFCCLOFL1,ECF_FLEET_CYC_ENTRETIENMENSUEL,ODOO_HOST,ALWAYS,ECFCCLOFL1.sh,Verifie une fois par mois quels vehicules ont besoin d'un entretien - cycle EOM,FLOTTE_EOM_WINDOW_OPEN,FLOTTE_EOM_TERMINE,FL
+ECFCCLOPS2,ECF_PDV_CYC_RAPPORTMENSUEL,ODOO_HOST,ALWAYS,ECFCCLOPS2.sh,Bilan mensuel des ventes par point de vente - cycle EOM,PDV_EOM_WINDOW_OPEN,PDV_EOM_TERMINE,PS
+ECFCCLOEC1,ECF_ECOM_CYC_RAPPORTVENTES,ODOO_HOST,ALWAYS,ECFCCLOEC1.sh,Bilan quotidien des ventes en ligne et des paniers abandonnes en cours - cycle TFJ,ECOM_TFJ_WINDOW_OPEN,ECOM_TFJ_TERMINE,EC
+ECFJRELEC1,ECF_ECOM_JOUR_RELANCEPANIER,ODOO_HOST,ALWAYS,ECFJRELEC1.sh,Relance les clients ayant un panier en ligne inactif depuis plus de 4h - job JOUR/NRT continu (site ouvert 24h/24),ECOM_ACTIVE,NONE,EC
+ECFCCLORH1,ECF_RH_CYC_EFFECTIFMENSUEL,ODOO_HOST,ALWAYS,ECFCCLORH1.sh,Photographie mensuelle des effectifs actifs et de leur anciennete - cycle EOM,RH_EFF_EOM_WINDOW_OPEN,RH_EFF_EOM_TERMINE,RH
+ECFCCLORH2,ECF_RH_CYC_BILANSOCIAL,ODOO_HOST,ALWAYS,ECFCCLORH2.sh,Bilan RH complet de l'annee ecoulee (entrees - sorties - effectif) - cycle EOY,RH_EOY_WINDOW_OPEN,RH_EOY_TERMINE,RH
+ECFRSOFRH1,ECF_RH_RUN_OFFBOARDING,ODOO_HOST,ALWAYS,ECFRSOFRH1.sh,Traite un depart confirme depuis un CSV depose dans operations/rh/rcv (checklist retrait acces - materiel - archivage - job repetable Tier 1),RH_ACTIVE,NONE,RH

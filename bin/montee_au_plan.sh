@@ -113,6 +113,19 @@ declare -A CYCLE_WINDOWS=(
   [TFJ_RH_WINDOW_OPEN]="DAILY:TFJ_RH_TERMINE:RH - alerte quotidienne des fins de contrat proches"
   [PRESENCES_EOM_WINDOW_OPEN]="MONTHLY:PRESENCES_EOM_TERMINE:Presences - calcul des heures travaillees mensuel"
   [PROJETS_EOM_WINDOW_OPEN]="MONTHLY:PROJETS_EOM_TERMINE:Projets - facturation au temps passe mensuelle"
+  # Ajoutes le 2026-09-05 (chantier "garage auto + parfumerie" - premiers
+  # lots d'operations demandes en vue de deux demos client, CRM/RH/
+  # Reparation/Flotte/Point de vente/eCommerce) - PREMIER usage reel des
+  # cadences WEEKLY (CRM_EOW) et YEARLY (RH_EOY), deja implementees
+  # ci-dessous mais jamais encore declarees avant ce jour :
+  [CRM_EOW_WINDOW_OPEN]="WEEKLY:CRM_EOW_TERMINE:CRM - bilan hebdomadaire du pipeline commercial"
+  [REPAIR_TFJ_WINDOW_OPEN]="DAILY:REPAIR_TFJ_TERMINE:Reparation - point quotidien SAV (en cours/terminees)"
+  [FLOTTE_JOUR_WINDOW_OPEN]="DAILY:FLOTTE_JOUR_TERMINE:Flotte vehicules - alerte echeance assurance/controle technique"
+  [FLOTTE_EOM_WINDOW_OPEN]="MONTHLY:FLOTTE_EOM_TERMINE:Flotte vehicules - controle entretien mensuel"
+  [PDV_EOM_WINDOW_OPEN]="MONTHLY:PDV_EOM_TERMINE:Point de vente - bilan mensuel des ventes par point de vente"
+  [ECOM_TFJ_WINDOW_OPEN]="DAILY:ECOM_TFJ_TERMINE:eCommerce - bilan quotidien ventes en ligne/paniers abandonnes"
+  [RH_EFF_EOM_WINDOW_OPEN]="MONTHLY:RH_EFF_EOM_TERMINE:RH - photographie mensuelle des effectifs"
+  [RH_EOY_WINDOW_OPEN]="YEARLY:RH_EOY_TERMINE:RH - bilan social annuel"
 )
 
 PLAN_FILE="$PLAN_DIR/${TODAY}.csv"

@@ -1211,3 +1211,33 @@ littéral en dur) ; un fichier factice vieux de 90+ jours déposé dans
 `arc/` a été retrouvé par `ECFCPRG1.sh` (recherche désormais
 `-name "$DOSSIER_ARCHIVE"`) et réellement déplacé vers
 `operations_archive_froide/vt/` via la variable promue.
+
+## 2026-09-05 — Lot 3 : 12 opérations pour deux démos client (garage auto RH/CRM, boutique parfumerie retail)
+
+**Contexte** : demande explicite de préparer des démos live pour un garage automobile (a insisté sur RH/CRM/ERP) et une boutique de parfumerie (retail/point de vente/vente en ligne). Choix du périmètre laissé au jugement du projet ("tout ce qui protège/augmente/dirige le CA, garantit l'exploitation, aide la conformité") plutôt qu'une liste fermée par le client.
+
+**Construit** (12 jobs, 12 opérations, modules CRM/Réparation/Flotte véhicules/Point de vente/eCommerce/RH) :
+- `ECFJSCORCR1` (CRM, NRT continu) — score de qualification simple 0-3 sur les pistes actives (téléphone renseigné, montant attendu, ancienneté), écrit dans le champ standard `priority` — Community n'a pas de scoring prédictif (Enterprise), construit honnêtement le sous-ensemble réel possible.
+- `ECFCCLOCR1` (CRM, EOW) — bilan hebdomadaire du pipeline commercial (`crm.lead`).
+- `ECFJALRRP1` (Réparation, JOUR/NRT) — notification client sur changement d'étape (`repair.order`), garde horaire 8h-18h, jamais deux fois le même changement (marqueurs `state/repair_notifie/`).
+- `ECFCCLORP1` (Réparation, TFJ) — point quotidien SAV (réparations en cours/terminées).
+- `ECFCALRFL1` (Flotte véhicules, JOUR) — alerte échéance assurance/contrôle technique sous 30j (`fleet.vehicle.log.contract` — **à confirmer sur la VM réelle**, comme `ECFRAHRC` en son temps).
+- `ECFCCLOFL1` (Flotte véhicules, EOM) — contrôle entretien mensuel (`fleet.vehicle.log.services`).
+- `ECFCCLOPS2` (Point de vente, EOM) — bilan mensuel des ventes par point de vente (`pos.order` regroupé par `config_id`) — numéroté `..PS2` car `..PS1` existe déjà (clôture caisse quotidienne, cycle différent).
+- `ECFCCLOEC1` (eCommerce, TFJ) — bilan quotidien ventes en ligne + paniers abandonnés (`sale.order` avec `website_id`) — détection par requête ORM directe, jamais la fausse automatisation Enterprise (Marketing Automation).
+- `ECFJRELEC1` (eCommerce, JOUR/NRT continu, sans garde horaire — boutique en ligne 24h/24) — relance des paniers inactifs depuis plus de 4h, jamais deux fois le même panier.
+- `ECFCCLORH1` (RH, EOM) — photographie mensuelle des effectifs et ancienneté.
+- `ECFCCLORH2` (RH, EOY) — bilan social annuel (entrées/sorties/effectif).
+- `ECFRSOFRH1` (RH, ON_DEMAND, Tier 1 fichier) — traitement d'un départ confirmé depuis un CSV déposé dans `rh/rcv` (checklist retrait accès/matériel/dossier), même patron que `ECFRCRCL.sh`.
+
+**Consolidation honnête** (comme pour d'autres lots cette session) : le catalogue estimait 2-3 jobs par opération pour 8 de ces 12 (ex. "calcul - mise à jour", "extraction - KPI - envoi") — construits en 1 seul job réel à chaque fois, car le motif `OUT_COND=NONE` qui permet la répétition continue empêche un vrai chaînage entre deux jobs eux-mêmes continus, et parce que les sous-étapes ne sont utiles qu'ensemble (même raisonnement déjà appliqué à `ECFCCLOVT2`). L'envoi email du rapport pipeline hebdomadaire n'a pas été construit (nécessiterait un gabarit distinct de `bin/notifier.sh`, qui n'alerte que sur échec de job) — le rapport reste consultable dans `snd/` comme tous les autres.
+
+**Calendrier** : 8 nouvelles fenêtres dans `bin/montee_au_plan.sh` (`CRM_EOW_WINDOW_OPEN`, `REPAIR_TFJ_WINDOW_OPEN`, `FLOTTE_JOUR_WINDOW_OPEN`, `FLOTTE_EOM_WINDOW_OPEN`, `PDV_EOM_WINDOW_OPEN`, `ECOM_TFJ_WINDOW_OPEN`, `RH_EFF_EOM_WINDOW_OPEN`, `RH_EOY_WINDOW_OPEN`) — **premier usage réel des cadences WEEKLY et YEARLY**, déjà codées dans le script depuis un chantier précédent mais jamais encore déclarées par aucun job avant celui-ci.
+
+**Vérifié réellement** :
+- `bash -n` sur les 12 nouveaux scripts + `montee_au_plan.sh` ; `bin/verifier_independance_modules.sh` → 34/34 toujours indépendants ; `jobs_table.csv` → 9 colonnes partout, 148 lignes de données, aucun `JOB_ID`/`OUT_COND` dupliqué.
+- **Test fonctionnel réel de `montee_au_plan.sh`** dans un `STATE_DIR` isolé, exécuté un vrai samedi (2026-09-05) : les 10 fenêtres DAILY et la nouvelle fenêtre WEEKLY (`CRM_EOW_WINDOW_OPEN`) s'ouvrent bien le même jour, idempotence confirmée au 2e passage (11/11 "déjà ouvert"). La cadence YEARLY n'ayant pas de vrai 1er janvier disponible pour tester, un faux `date` (wrapper dans le PATH, horloge système jamais touchée) a simulé le 1er janvier : `RH_EOY_WINDOW_OPEN` s'ouvre bien ce jour-là, en même temps que les fenêtres MONTHLY/QUARTERLY — confirmé par la présence réelle du marqueur `.ok`.
+- **Test fonctionnel réel de l'orchestrateur** (question explicite de l'utilisateur sur le mécanisme chaîne/parallèle) : copie complète du dépôt, table réduite à 8 jobs réels (le cycle TFJ Ventes à 3 jobs + 5 jobs TFJ indépendants d'autres modules, scripts remplacés par des stubs légers `sleep 2` pour observer le timing sans VM Odoo), fenêtres pré-ouvertes, `orchestrator.sh` lancé tel quel : les 6 jobs indépendants démarrent à la même seconde (07:04:40), puis le cycle Ventes progresse automatiquement passe par passe (07:04:43 → 07:04:46 → 07:04:48) au fur et à mesure que chaque `OUT_COND` se libère — confirme que c'est l'orchestrateur qui redétecte et relance, jamais un job qui "appelle" le suivant.
+- Régénération des deux classeurs Excel, vérifiée via COM : 31/31 jobs retrouvés dans les 2 feuilles du dossier d'exploitation (imbrication à 2 niveaux toujours cohérente), 88/88 opérations dans le catalogue, graphique "Statut réel" recalculé (44 À CONSTRUIRE / 42 CONSTRUITES / 2 HORS PÉRIMÈTRE).
+
+**Résultat catalogue** : 42 des 88 opérations désormais CONSTRUITES (contre 30).
