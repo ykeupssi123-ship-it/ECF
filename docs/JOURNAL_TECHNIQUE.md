@@ -1324,3 +1324,17 @@ Le quotidien est déjà **majoritaire** — l'argument MCO est déjà vrai, il f
 - Les 2 feuilles supprimées de `TABLEAU_DE_BORD_CYCLES_OPERATOIRES.xlsx` (CSV sources conservés dans le dépôt pour traçabilité, plus importés dans le classeur).
 - Nouvelle feuille **"Vocabulaire"** à 3 sections indépendantes : (1) les **variables d'environnement réelles** de `vars.conf` demandées - `$OPERATIONS_DIR`, `$DOSSIER_RECU/PRODUIT/TRANSIT/ARCHIVE`, `$ARCHIVE_FROIDE_DIR`, `$MAX_PARALLEL_JOBS`, `$NOTIF_ENABLED`/`$NOTIF_METIER_ENABLED`, etc. ; (2) le vocabulaire Control-M → équivalent ECF, seule partie réellement non-redondante de l'ancienne feuille "Exploitation MCO" (le reste faisait doublon avec le tableau de bord visuel de "Vue d'ensemble" ajouté plus tôt le même jour) ; (3) le glossaire métier CRM/Ventes, déplacé hors de l'intro de "Vue d'ensemble" qui devenait trop chargée.
 - **Bug réel trouvé et corrigé avant livraison** : une hauteur de ligne fixe (30pt) était trop courte pour les descriptions qui se replient sur 2 lignes, provoquant un chevauchement visuel à l'export PDF - corrigé par `.AutoFit()` (hauteur calculée par Excel, jamais figée en dur) + un saut de page forcé avant chaque section (même bug de fond que celui déjà trouvé sur "Vue d'ensemble" le même jour) - reverifié par un export PDF réel (3 pages propres, une section par page, plus aucun chevauchement).
+
+## 2026-09-05 — Code couleur orange (niveau 1) sur les plans imbriqués, uniformisé sur les 2 classeurs
+
+**Demande explicite** : recolorer les en-têtes de niveau 1 des plans imbriqués (famille/module/type) en orange, gras, sur toutes les feuilles concernées des deux classeurs - niveaux 2 et 3 inchangés (déjà validés).
+
+**Constaté avant modification** : le violet Ankrr (`$accentPurple`/`$ankrPurple`) servait à la fois de fond de ligne de niveau 1 ET de couleur de texte-accent ailleurs (identifiants/chiffres clés dans d'autres feuilles, séries des 3 graphiques de "Vue d'ensemble") - un renommage global aurait cassé ces autres usages. Nouvelle variable dédiée `$level1Orange` (RGB 211,84,0 - "pumpkin" #D35400) introduite spécifiquement pour le fond des lignes de niveau 1, sans toucher aux autres rôles du violet.
+
+**Appliqué** :
+- `build_dossier_exploitation.ps1` : `ws3` ("Jobs et cycles", en-tête famille) et `ws3b` ("Jobs par type de traitement", en-tête cycle).
+- `build_dashboard_cycles.ps1` : `ws7` ("Catalogue des opérations", en-tête module) et `ws7b` ("Operations par type traitement", en-tête type).
+- Niveau 2 (sous-en-tête) et niveau 3 (détail) laissés strictement inchangés, comme demandé - y compris la coloration Statut (vert=CONSTRUIT) déjà en place sur le niveau 3.
+- Les 3 graphiques de "Vue d'ensemble" (violet/bleu/vert) non touchés - le violet y garde son rôle de couleur de série, sans lien avec les en-têtes de ligne.
+
+**Vérifié** : couleurs relues via COM sur les 2 classeurs après régénération - `21715` (= RGB 211,84,0, orange) confirmé sur toutes les lignes de niveau 1 testées, niveaux 2/3 inchangés (`15104064`/statuts). Export PDF réel sur "Jobs et cycles" (dossier d'exploitation, thème sombre) et "Catalogue des opérations" (tableau de bord, thème clair) : orange lisible et cohérent sur les deux fonds, texte blanc gras toujours contrasté.
