@@ -147,3 +147,5 @@ ECFJRELEC1,ECF_ECOM_JOUR_RELANCEPANIER,ODOO_HOST,ALWAYS,ECFJRELEC1.sh,Relance le
 ECFCCLORH1,ECF_RH_CYC_EFFECTIFMENSUEL,ODOO_HOST,ALWAYS,ECFCCLORH1.sh,Photographie mensuelle des effectifs actifs et de leur anciennete - cycle EOM,RH_EFF_EOM_WINDOW_OPEN,RH_EFF_EOM_TERMINE,RH
 ECFCCLORH2,ECF_RH_CYC_BILANSOCIAL,ODOO_HOST,ALWAYS,ECFCCLORH2.sh,Bilan RH complet de l'annee ecoulee (entrees - sorties - effectif) - cycle EOY,RH_EOY_WINDOW_OPEN,RH_EOY_TERMINE,RH
 ECFRSOFRH1,ECF_RH_RUN_OFFBOARDING,ODOO_HOST,ALWAYS,ECFRSOFRH1.sh,Traite un depart confirme depuis un CSV depose dans operations/rh/rcv (checklist retrait acces - materiel - archivage - job repetable Tier 1),RH_ACTIVE,NONE,RH
+ECFJINTCP1,ECF_COMPTA_JOUR_EXPORTINTRADAY,ODOO_HOST,ALWAYS,ECFJINTCP1.sh,Exporte les ecritures comptables du jour a heures fixes (10h/14h/16h) - job INTRADAY continu,COMPTA_ACTIVE,NONE,CP
+ECFJDIFCP1,ECF_COMPTA_JOUR_RELEVEDIFFERE,ODOO_HOST,ALWAYS,ECFJDIFCP1.sh,Genere les releves de compte clients du mois - traitement lourd decale en heures creuses (1h-5h) - job DIFFERE continu,COMPTA_ACTIVE,NONE,CP
