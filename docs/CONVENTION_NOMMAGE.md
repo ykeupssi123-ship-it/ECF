@@ -359,12 +359,11 @@ n'exprime réellement de cette façon. Détail complet dans l'en-tête de
 - **REPLAY** : déjà couvert, rien à construire (`bin/rerun_job.sh` =
   rejoue une instance ; `bin/order_job.sh` = force malgré des
   dépendances manquantes).
-- **Reste du catalogue HAUTE priorité** (`docs/TABLEAU_DE_BORD_CYCLES_OPERATOIRES.xlsx`,
-  onglet "Catalogue des opérations") : 8 opérations HAUTE priorité
-  restent à construire après ce lot (CRM relance pistes, Achat
-  réapprovisionnement nocturne, Stock alertes rupture + inventaire
-  tournant, Point de vente clôture de caisse, RH alerte fin de contrat,
-  Présences calcul mensuel) — prochain lot du même chantier.
+- **Reste du catalogue** (`docs/TABLEAU_DE_BORD_CYCLES_OPERATOIRES.xlsx`,
+  onglet "Catalogue des opérations") : toutes les opérations HAUTE
+  priorité sont construites depuis le 2026-09-05 (voir
+  `docs/JOURNAL_TECHNIQUE.md`, entrée du même jour) — reste 56
+  opérations MOYENNE/BASSE priorité, sur le même patron déjà prouvé.
 
 ## Tier 1 — jobs métier réels (éclatement atomique, démarré le 4 septembre 2026)
 

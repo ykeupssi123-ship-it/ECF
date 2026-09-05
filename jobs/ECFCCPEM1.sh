@@ -29,10 +29,10 @@ PROJECT_ROOT="$(dirname "$VARS_FILE")"
 source "$PROJECT_ROOT/lib/commun.sh"
 
 OPERATIONS_DIR="${ODOO_HOME}/operations"
-CLOTURE_DIR="$OPERATIONS_DIR/cp/cloture"
-mkdir -p "$CLOTURE_DIR"
+SND_DIR="$OPERATIONS_DIR/cp/snd"
+mkdir -p "$SND_DIR"
 
-RAPPORT="$CLOTURE_DIR/cloture_mensuelle_$(date +%Y%m).txt"
+RAPPORT="$SND_DIR/cloture_mensuelle_$(date +%Y%m).txt"
 
 RESULTAT="$(_odoo_shell_exec "
 import calendar

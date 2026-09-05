@@ -15,7 +15,7 @@
 # (state=sent, en attente de retour) depuis plus de 2h sans reponse -
 # alerte precoce, pendant les heures ouvrees, distincte du nettoyage de
 # fond TFJ (qui traite les devis BROUILLON, jamais envoyes). Rapport
-# ecrit dans $ECFOP/vt/snd. OUT_COND=NONE.
+# ecrit dans $OPERATIONS_DIR/vt/snd. OUT_COND=NONE.
 set -uo pipefail
 source "$VARS_FILE"
 PROJECT_ROOT="$(dirname "$VARS_FILE")"

@@ -104,6 +104,15 @@ declare -A CYCLE_WINDOWS=(
   [COMPTA_EOM_WINDOW_OPEN]="MONTHLY:COMPTA_EOM_TERMINE:Comptabilite - cloture comptable mensuelle"
   [COMPTA_EOQ_WINDOW_OPEN]="QUARTERLY:COMPTA_EOQ_TERMINE:Comptabilite - declaration TVA trimestrielle"
   [VENTES_EOM_WINDOW_OPEN]="MONTHLY:VENTES_EOM_TERMINE:Ventes - cloture commerciale mensuelle (objectifs, commissions)"
+  # Ajoutes le 2026-09-05 (2e lot du meme chantier "anticipation" -
+  # les 8 dernieres operations HAUTE priorite du catalogue) :
+  [TFJ_CRM_WINDOW_OPEN]="DAILY:TFJ_CRM_TERMINE:CRM - relance quotidienne des pistes stagnantes (>7j)"
+  [TFJ_ACHAT_WINDOW_OPEN]="DAILY:TFJ_ACHAT_TERMINE:Achat - reapprovisionnement automatique nocturne"
+  [TFJ_STOCK_WINDOW_OPEN]="DAILY:TFJ_STOCK_TERMINE:Stock - valorisation nocturne"
+  [TFJ_PDV_WINDOW_OPEN]="DAILY:TFJ_PDV_TERMINE:Point de vente - cloture de caisse quotidienne"
+  [TFJ_RH_WINDOW_OPEN]="DAILY:TFJ_RH_TERMINE:RH - alerte quotidienne des fins de contrat proches"
+  [PRESENCES_EOM_WINDOW_OPEN]="MONTHLY:PRESENCES_EOM_TERMINE:Presences - calcul des heures travaillees mensuel"
+  [PROJETS_EOM_WINDOW_OPEN]="MONTHLY:PROJETS_EOM_TERMINE:Projets - facturation au temps passe mensuelle"
 )
 
 PLAN_FILE="$PLAN_DIR/${TODAY}.csv"

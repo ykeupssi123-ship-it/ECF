@@ -8,7 +8,9 @@
 # (account.bank.statement.line) non encore rapprochees (is_reconciled=False)
 # de plus de 2 jours - un ecart de reconciliation qui traine est le
 # premier signal d'un probleme (paiement non lettre, doublon, erreur de
-# saisie). Rapport ecrit dans $ECFOP/cp/rec, jamais juste affiche.
+# saisie). Rapport ecrit dans $OPERATIONS_DIR/cp/snd (sous-dossier
+# canonique "fichiers produits", voir jobs/ECFBOPD.sh), jamais juste
+# affiche.
 # OUT_COND=TFJ_COMPTA_RECONBANK_OK (REEL, remis a zero par
 # montee_au_plan.sh le cycle suivant, jamais par ce job lui-meme).
 set -uo pipefail
@@ -17,10 +19,10 @@ PROJECT_ROOT="$(dirname "$VARS_FILE")"
 source "$PROJECT_ROOT/lib/commun.sh"
 
 OPERATIONS_DIR="${ODOO_HOME}/operations"
-REC_DIR="$OPERATIONS_DIR/cp/rec"
-mkdir -p "$REC_DIR"
+SND_DIR="$OPERATIONS_DIR/cp/snd"
+mkdir -p "$SND_DIR"
 
-RAPPORT="$REC_DIR/reconciliation_bancaire_$(date +%Y%m%d).csv"
+RAPPORT="$SND_DIR/reconciliation_bancaire_$(date +%Y%m%d).csv"
 
 RESULTAT="$(_odoo_shell_exec "
 import csv

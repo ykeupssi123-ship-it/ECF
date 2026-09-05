@@ -127,3 +127,11 @@ ECFCCPFI1,ECF_COMPTA_CYC_RELANCEFACT,ODOO_HOST,ALWAYS,ECFCCPFI1.sh,Detecte les f
 ECFCCPEM1,ECF_COMPTA_CYC_CLOTUREMENSUELLE,ODOO_HOST,ALWAYS,ECFCCPEM1.sh,Cloture comptable mensuelle - CA facture/encaisse/balance agee du mois ecoule (cycle EOM),COMPTA_EOM_WINDOW_OPEN,COMPTA_EOM_TERMINE,CP
 ECFCCPEQ1,ECF_COMPTA_CYC_DECLARTVA,ODOO_HOST,ALWAYS,ECFCCPEQ1.sh,Declaration TVA trimestrielle simplifiee - TVA collectee/deductible/nette du trimestre ecoule (cycle EOQ),COMPTA_EOQ_WINDOW_OPEN,COMPTA_EOQ_TERMINE,CP
 ECFCVTEM1,ECF_VENTE_CYC_CLOTUREMENSUELLE,ODOO_HOST,ALWAYS,ECFCVTEM1.sh,Cloture commerciale mensuelle - CA et repartition par commercial du mois ecoule (cycle EOM),VENTES_EOM_WINDOW_OPEN,VENTES_EOM_TERMINE,VT
+ECFCCRRL1,ECF_CRM_CYC_RELANCE,ODOO_HOST,ALWAYS,ECFCCRRL1.sh,Detecte les pistes commerciales stagnantes depuis plus de 7 jours (cycle TFJ CRM),TFJ_CRM_WINDOW_OPEN,TFJ_CRM_TERMINE,CR
+ECFCAHRA1,ECF_ACHAT_CYC_REAPPRO,ODOO_HOST,ALWAYS,ECFCAHRA1.sh,Propose les reapprovisionnements sous le seuil minimum de stock (cycle TFJ Achat),TFJ_ACHAT_WINDOW_OPEN,TFJ_ACHAT_TERMINE,AH
+ECFJSTRU,ECF_STOCK_JOUR_RUPTURE,ODOO_HOST,ALWAYS,ECFJSTRU.sh,Alerte les produits en rupture de stock en temps quasi-reel (job NRT),STOCK_ACTIVE,NONE,ST
+ECFCSTIN1,ECF_STOCK_CYC_INVENTAIRE,ODOO_HOST,ALWAYS,ECFCSTIN1.sh,Valorisation nocturne du stock disponible (cycle TFJ Stock),TFJ_STOCK_WINDOW_OPEN,TFJ_STOCK_TERMINE,ST
+ECFCPSCX1,ECF_PDV_CYC_CLOTURECAISSE,ODOO_HOST,ALWAYS,ECFCPSCX1.sh,Rapport de cloture de caisse des sessions fermees aujourd'hui (cycle TFJ Point de vente),TFJ_PDV_WINDOW_OPEN,TFJ_PDV_TERMINE,PS
+ECFCRHFC1,ECF_RH_CYC_FINCONTRAT,ODOO_HOST,ALWAYS,ECFCRHFC1.sh,Alerte les contrats arrivant a echeance sous 30 jours (cycle TFJ RH),TFJ_RH_WINDOW_OPEN,TFJ_RH_TERMINE,RH
+ECFCPNHM1,ECF_PRESENCES_CYC_HEURESMOIS,ODOO_HOST,ALWAYS,ECFCPNHM1.sh,Calcule les heures travaillees du mois ecoule par employe - base paie (cycle EOM Presences),PRESENCES_EOM_WINDOW_OPEN,PRESENCES_EOM_TERMINE,PN
+ECFCPJFA1,ECF_PROJETS_CYC_FACTURATION,ODOO_HOST,ALWAYS,ECFCPJFA1.sh,Consolide les heures de temps passe par projet du mois ecoule - base facturation (cycle EOM Projets),PROJETS_EOM_WINDOW_OPEN,PROJETS_EOM_TERMINE,PJ

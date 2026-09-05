@@ -1100,3 +1100,64 @@ stagnantes (TFJ), Achat réapprovisionnement automatique nocturne
 tournant nocturne (TFJ), Point de vente clôture de caisse quotidienne
 (TFJ), RH alerte fin de contrat (TFJ), Présences calcul des heures
 travaillées mensuel (EOM).
+
+## 2026-09-05 — Deuxième lot : les 8 dernières opérations HAUTE priorité (CRM, Achat, Stock, Point de vente, RH, Présences, Projets)
+
+Demande explicite de terminer le lot HAUTE priorité en une seule fois,
+sans laisser d'opérations "en attente" — les 8 restantes de la liste
+ci-dessus, plus Projets (facturation au temps passé) identifiée dans le
+même passage du catalogue.
+
+**Correction d'alignement faite avant de construire la suite** :
+`jobs/ECFBOPD.sh` (construit le 2026-09-04, inspiré explicitement de la
+pratique SGABS de l'utilisateur — SM2/RCV, SND_BNK, ARC_BNK) impose une
+structure canonique unique par module : `$OPERATIONS_DIR/<code>/{rcv,snd,tmp,arc}`,
+"jamais une seconde liste maintenue à la main". Le lot du 2026-09-04
+(`ECFCCPRB1`, `ECFCCPEM1`, `ECFCCPEQ1`, `ECFCVTEM1`) avait pourtant
+introduit deux sous-dossiers hors de cette liste (`rec`, `cloture`) —
+trouvé en relisant `ECFBOPD.sh` avant de construire ce deuxième lot, corrigé
+immédiatement : ces 4 scripts écrivent désormais dans `snd` (fichiers
+produits), comme tout le reste du dépôt. Un `$ECFOP` inexistant traînait
+aussi dans deux commentaires (jamais une vraie variable du projet) —
+remplacé par `$OPERATIONS_DIR`, le seul nom réel.
+
+**Construit** (8 jobs, 7 nouvelles fenêtres calendaires) :
+- `ECFCCRRL1` (CRM, TFJ) — pistes (`crm.lead`, type=lead) sans activité
+  depuis plus de 7 jours.
+- `ECFCAHRA1` (Achat, TFJ) — produits sous leur seuil de
+  réapprovisionnement (`stock.warehouse.orderpoint`, fonctionnalité
+  native) : PROPOSE une liste, ne crée aucune commande fournisseur
+  automatiquement.
+- `ECFJSTRU` (Stock, NRT — pas de fenêtre calendaire, `IN_COND=STOCK_ACTIVE`
+  comme `ECFJVTSV`/`VENTE_ACTIVE`) — produits en rupture
+  (`qty_available <= 0`), aucune garde horaire (NRT est continu par
+  nature, contrairement à JOUR).
+- `ECFCSTIN1` (Stock, TFJ) — **rebaptisé "Valorisation nocturne du
+  stock"** dans le catalogue (au lieu d'"Inventaire tournant") : un
+  comptage physique tournant réel est impossible sans matériel de
+  terrain — construit honnêtement le sous-ensemble réalisable
+  (valorisation à partir du stock système), jamais présenté comme
+  l'opération complète d'origine.
+- `ECFCPSCX1` (Point de vente, TFJ) — rapport de synthèse des sessions
+  de caisse (`pos.session`) fermées le jour même ; ne duplique jamais le
+  rapprochement espèces/carte, déjà fait par l'écran de fermeture Odoo
+  lui-même.
+- `ECFCRHFC1` (RH, TFJ) — contrats (`hr.contract.date_end`) à échéance
+  sous 30 jours.
+- `ECFCPNHM1` (Présences, EOM) — heures travaillées du mois écoulé par
+  employé (`hr.attendance`), base de calcul paie (la paie CALCULÉE
+  reste Enterprise, pas ce pointage).
+- `ECFCPJFA1` (Projets, EOM) — heures de temps passé par projet
+  (`account.analytic.line`) du mois écoulé : base de facturation,
+  aucune facture générée automatiquement.
+
+**Vérifié réellement** : `bash -n` sur les 8 scripts + `montee_au_plan.sh` ;
+`bin/verifier_independance_modules.sh` → 34/34 toujours indépendants ;
+9 colonnes partout dans `jobs_table.csv`, aucun `JOB_ID`/`OUT_COND`
+dupliqué ; test fonctionnel isolé de `montee_au_plan.sh` confirmant
+l'ouverture réelle des 7 nouvelles fenêtres `DAILY` (7/7 `OUVERT`) et
+l'idempotence au second passage ; bit exécutable Git corrigé sur les 8
+nouveaux scripts.
+
+**Résultat catalogue** : 30 des 88 opérations désormais CONSTRUITES
+(contre 22), **0 opération HAUTE priorité restant A CONSTRUIRE**.
