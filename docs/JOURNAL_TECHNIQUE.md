@@ -1338,3 +1338,16 @@ Le quotidien est déjà **majoritaire** — l'argument MCO est déjà vrai, il f
 - Les 3 graphiques de "Vue d'ensemble" (violet/bleu/vert) non touchés - le violet y garde son rôle de couleur de série, sans lien avec les en-têtes de ligne.
 
 **Vérifié** : couleurs relues via COM sur les 2 classeurs après régénération - `21715` (= RGB 211,84,0, orange) confirmé sur toutes les lignes de niveau 1 testées, niveaux 2/3 inchangés (`15104064`/statuts). Export PDF réel sur "Jobs et cycles" (dossier d'exploitation, thème sombre) et "Catalogue des opérations" (tableau de bord, thème clair) : orange lisible et cohérent sur les deux fonds, texte blanc gras toujours contrasté.
+
+## 2026-09-05 — Extension du code couleur orange/bleu à toute hiérarchie réelle (pas juste les 4 feuilles à plan Excel)
+
+**Demande explicite** : le même code couleur (niveau 1 orange gras, niveau 2 bleu, niveau 3 blanc/statut) doit s'appliquer partout où c'est réellement pertinent dans les deux classeurs - pas seulement les 4 feuilles à plan Excel (Group/Outline) déjà traitées - en gardant l'impression A4 intacte partout.
+
+**Jugement appliqué, feuille par feuille** (les deux classeurs, 13 feuilles au total) : le code couleur encode une VRAIE hiérarchie à 2 niveaux (section/groupe → détail). Il n'a de sens que là où une telle hiérarchie existe réellement - l'imposer à une liste plate à un seul niveau (un seul en-tête de colonnes, aucun regroupement) n'ajouterait aucune information, seulement une décoration arbitraire.
+
+- **Étendu** (hiérarchie réelle trouvée) :
+  - `Vocabulaire` (tableau de bord) : 3 sections ("1. Variables d'environnement", "2. Vocabulaire Control-M", "3. Glossaire métier") = niveau 1 (orange), chacune avec sa propre ligne d'en-tête de colonnes = niveau 2 (bleu). Les lignes de statut de la section 2 (vert = équivalent déjà construit) restent inchangées.
+  - `Vue d'ensemble` (tableau de bord) : le bandeau "TABLEAU DE BORD VISUEL..." = niveau 1 (orange), les 3 en-têtes des mini-tableaux sources des graphiques (Type de traitement/Statut/Famille de cadence) = niveau 2 (bleu). Les 3 graphiques (violet/bleu/vert) non touchés - couleur de série, pas de ligne.
+- **Laissé tel quel, avec justification** (pas de hiérarchie réelle - une seule ligne d'en-tête, aucun regroupement) : `Mode d'emploi`, `Checklist quotidienne`, `Espace central d'échange`, `Glossaire Control-M`, `Depannage niveau 1` (dossier d'exploitation) ; `Taxonomie complète`, `Cycles réels construits` (tableau de bord) - forcer un orange/bleu sur ces listes plates aurait été une décoration sans signification, jamais fait juste pour "faire pareil partout".
+
+**Vérifié** : couleurs relues via COM sur `Vocabulaire` (orange `21715` sur les 3 titres de section, bleu `15104064` sur les 3 en-têtes de colonnes) et `Vue d'ensemble` (même confirmation sur le bandeau et les 3 mini-tableaux). Export PDF réel des deux feuilles : mise en page A4 et sauts de page déjà en place restés intacts (aucune régression), orange/bleu lisibles, aucun chevauchement.
